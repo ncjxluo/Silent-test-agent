@@ -1,0 +1,63 @@
+openapi: 3.0.0
+info:
+  title: 获取系统内的角色
+  description: 该 API 用于获取系统的角色。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/system/role:
+    get:
+      operationId: find_system_role
+      summary: 获取系统内角色
+      description: 获取系统内的角色
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: 分页
+          example: 0
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: 大小
+          example: 10
+        - in: query
+          name: keywords
+          schema:
+            type: string
+          description: 系统角色名称
+          example: ${system_role_name}
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/Roles'
+components:
+  schemas:
+    Roles:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          type: array
+          items:
+            type: object
+      required:
+        - status
+        - message
+        - data

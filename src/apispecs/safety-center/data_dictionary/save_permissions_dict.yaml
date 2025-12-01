@@ -1,0 +1,135 @@
+# login1.yaml
+openapi: 3.0.0
+info:
+  title: 保存权限字典
+  description: 重置一个标准的权限字典
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  # 获取所有用户的接口
+  /api/v1/security/permissions-dictionaries/save:
+    post:
+      operationId: save_permissions_dict
+      summary: 保存权限字典
+      description: 保存标准的权限字典。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                is_unset:
+                  description: 是否清空字典数据
+                  type: integer
+                  example: 0
+                data:
+                  description: 字典数据
+                  type: object
+                  example: [
+                              {
+                                "group_name_key": "select_target",
+                                "dict_name_keys": [
+                                  "select",
+                                  "statistics"
+                                ],
+                                "sort": 1
+                              },
+                              {
+                                "group_name_key": "alert_target",
+                                "dict_name_keys": [
+                                  "insert",
+                                  "update"
+                                ],
+                                "sort": 2
+                              },
+                              {
+                                "group_name_key": "risk_target",
+                                "dict_name_keys": [
+                                  "delete",
+                                  "truncate",
+                                  "drop",
+                                  "drop_function",
+                                  "drop_index",
+                                  "drop_procedure",
+                                  "drop_table",
+                                  "drop_trigger",
+                                  "drop_view"
+                                ],
+                                "sort": 3
+                              },
+                              {
+                                "group_name_key": "manage_target",
+                                "dict_name_keys": [
+                                  "create",
+                                  "create_function",
+                                  "create_index",
+                                  "create_procedure",
+                                  "create_table",
+                                  "create_trigger",
+                                  "create_view",
+                                  "alter",
+                                  "alter_function",
+                                  "alter_index",
+                                  "alter_procedure",
+                                  "alter_table",
+                                  "alter_trigger",
+                                  "alter_view",
+                                  "grant",
+                                  "revoke"
+                                ],
+                                "sort": 4
+                              },
+                              {
+                                "group_name_key": "call_target",
+                                "dict_name_keys": [
+                                  "call",
+                                  "desc",
+                                  "show",
+                                  "debug",
+                                  "submit",
+                                  "cancel",
+                                  "vacuum",
+                                  "begin_end"
+                                ],
+                                "sort": 5
+                              },
+                              {
+                                "group_name_key": "export_target",
+                                "dict_name_keys": [
+                                  "export"
+                                ],
+                                "sort": 6
+                              }
+                            ]
+              required:
+                - data
+      responses:
+        "200":
+          description: 保存成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/GrantAuthResponse'
+components:
+  schemas:
+    GrantAuthResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          type: string
+      required:
+        - status
+        - message
+        - data

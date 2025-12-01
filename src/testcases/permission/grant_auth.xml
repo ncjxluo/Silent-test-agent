@@ -1,0 +1,86 @@
+<TestPlan name="用户授权">
+    <ThreadGroup name="用户授权线程组" threads="10">
+        <VariableDataSet name="用户定义的变量">
+            <stringProp name="u:username">admin</stringProp>
+        </VariableDataSet>
+        <DBDataSet name="sqlData">
+            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="port">3306</stringProp>
+            <stringProp name="username">admin</stringProp>
+            <stringProp name="password">whdata123</stringProp>
+            <stringProp name="database">str</stringProp>
+            <stringProp name="sql">
+                SELECT
+                    db_name, t1.system_user_name,t1.passwd,t1.operation, db_type, t1.object_type, t1.t_user_permission_type as permission_type
+                FROM
+                    str_db_template as db
+                    join (
+                    select
+                        u.t_user_name as system_user_name,
+                        u.t_user_passwd as passwd,
+                        case
+                        when u.t_user_permission = '["all"]' then (
+                            select
+                            JSON_ARRAYAGG(t.t_permission_name)
+                            from
+                            str_permission_template t
+                        )
+                        else u.t_user_permission
+                        end as operation,
+                        case
+                        when u.t_user_permission_type = 'instance' then 1
+                        when u.t_user_permission_type = 'schema' then 2
+                        when u.t_user_permission_type = 'table' then 3
+                        when u.t_user_permission_type = 'object' then 4
+                        else 5
+                        end as object_type,
+                        u.t_user_permission_type
+                    from
+                        str_user_template u
+                    ) as t1;
+            </stringProp>
+            <stringProp name="variableNames">instance_key,system_user_name,system_user_passwd,operation,db_type,object_type,operation_type</stringProp>
+        </DBDataSet>
+        <HttpSampler name="获取auth">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">get_auth</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <HeadExtractor name="header提取器" parentname="获取auth">
+                <HeaderProp name="h:Auth">$.data[0]</HeaderProp>
+             </HeadExtractor>
+        </HttpSampler>
+        <HttpSampler name="登录获取用户id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">user_login</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <VariableRename name="参数变量重命名">
+                <VariableProp name="vr:username">${system_user_name}</VariableProp>
+                <VariableProp name="vr:password">${system_user_passwd}</VariableProp>
+            </VariableRename>
+            <ExpressionExtractor name="提取" parentname="登录获取用户id">
+                <ExpressionProp name="e:sys_username_uuid">$.data.unique_key</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="查找实例的connect_id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_database_info</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查找实例的connect_id">
+                <ExpressionProp name="e:connect_id">$.data.records[0].unique_key</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="授予权限">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">grant_auth</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ResponseAssertion name="响应断言" parentname="授予权限" selfVerification="false">
+                <AssertProp name="a:message">执行成功 or 授权成功</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+        <ResultReportingListener name="用户授权"/>
+    </ThreadGroup>
+</TestPlan>

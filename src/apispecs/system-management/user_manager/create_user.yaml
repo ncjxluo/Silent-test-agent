@@ -1,0 +1,102 @@
+openapi: 3.0.0
+info:
+  title: 创建用户
+  description: 该 API 用于创建系统内部的用户。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/system/users:
+    post:
+      operationId: create_system_user
+      summary: 创建用户
+      description: 创建一个用户。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                username:
+                  description: 用户的名字
+                  type: string
+                  example: ${dc_uname}
+                real_name:
+                  description: 真实姓名
+                  type: string
+                  example: ${dc_uname}
+                organization_id:
+                  description: 组织的id
+                  type: integer
+                  example: ${organization_id}
+                email:
+                  description: 邮箱
+                  type: string
+                  example: ""
+                phone:
+                  description: 手机号
+                  type: string
+                  example: ""
+                role_ids:
+                  description: 角色id
+                  type: string
+                  example: ${role_ids}
+                is_active:
+                  description: 是否启用
+                  type: integer
+                  example: 1
+                create_mode	:
+                  description: 创建模式
+                  type: integer
+                  example: 1
+                extra	:
+                  description: 扩展信息
+                  type: string
+                  example: null
+                user_superior:
+                  description: 上级用户
+                  type: string
+                  example: ""
+              required:
+                - username
+                - real_name
+                - organization_id
+                - role_ids
+                - is_active
+                - user_superior
+      responses:
+        "200":
+          description: 用户创建成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/CreateUser'
+components:
+  schemas:
+    # 数据模型
+    CreateUser:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/UserInfo'
+      required:
+        - status
+        - message
+        - data
+    UserInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true

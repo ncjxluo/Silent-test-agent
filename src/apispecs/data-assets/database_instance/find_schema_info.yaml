@@ -1,0 +1,85 @@
+openapi: 3.0.0
+info:
+  title: 获取系统实例下的schema
+  description: 该 API 用于获取系统的schema信息。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/config/schemas:
+    get:
+      operationId: find_schema_info
+      summary: 获取系统schema
+      description: 获取系统内的schema的信息
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: 分页
+          example: 0
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: 大小
+          example: 10
+        - in: query
+          name: keywords
+          schema:
+            type: string
+          description: 搜索schema的key
+          example: ${schema_key}
+        - in: query
+          name: connect_id
+          schema:
+            type: string
+          description: 实例的id
+          example: ${connect_id}
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/SchemaResponses'
+components:
+  schemas:
+    SchemaResponses:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/SchemaInfo'
+      required:
+        - status
+        - message
+        - data
+    SchemaInfo:
+      type: object
+      properties:
+        pagination:
+          type: string
+          properties:
+            page:
+              type: integer
+            pages:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+        records:
+          type: array
+          items:
+            type: object

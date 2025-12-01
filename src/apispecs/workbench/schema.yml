@@ -1,0 +1,107 @@
+# login1.yaml
+openapi: 3.0.0
+info:
+  title: 实例树接口
+  description: 该 API 用于获取DataCaptain的纳管实例schema的接口。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: http://192.168.3.137:7080
+    description: 接口测试服务器
+paths:
+  /api/v1/sql/trees/schema:
+    get:
+      operationId: sql-tree-schema
+      summary: 展示schema的接口
+      description: 工作台首页展示schema树的接口。
+      parameters:
+        - in: query
+          name: connect_id
+          schema:
+            type: string
+          description: 实例的id
+          example: 0
+        - in: query
+          name: current_pattern
+          schema:
+            type: integer
+          description: 未知
+          example: 0
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/SchemasResponse'
+components:
+  schemas:
+    SchemasResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/SchemaInfo'
+      required:
+        - status
+        - message
+        - data
+    SchemaInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: false
+        key:
+          type: string
+          nullable: false
+        title:
+          type: string
+          nullable: false
+        icon:
+          type: integer
+          nullable: false
+        type:
+          type: string
+          nullable: false
+        isLeaf:
+          type: boolean
+          nullable: false
+        isopen:
+          type: boolean
+          nullable: false
+        pid:
+          type: boolean
+          nullable: false
+        icon_active:
+          type: string
+          nullable: false
+        is_schema:
+          type: boolean
+          nullable: false
+        connect_id:
+          type: string
+          nullable: false
+        schema_id:
+          type: string
+          nullable: false
+        schema_name:
+          type: string
+          nullable: false
+        db_type:
+          type: integer
+          nullable: false
+        is_private:
+          type: integer
+          nullable: false
+        is_topped:
+          type: boolean
+          nullable: false

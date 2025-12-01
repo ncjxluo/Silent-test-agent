@@ -1,0 +1,1 @@
+1test,检查我们没有任何奇怪的新表或数据,select schema_name from information_schema.schemata order by schema_name;,instance:manager;instance:dba;instance:business;instance:dba(no_system);instance:business(no_system);instance:select;information_schema:select;information_schema.schemata:select;

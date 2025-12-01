@@ -1,0 +1,65 @@
+openapi: 3.0.0
+info:
+  title: 用户关闭会话的接口
+  description: 该 API 用于用户在sql关闭打开会话。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/sql/executes/disconnect:
+    post:
+      operationId: close_session
+      summary: 打开会话
+      description: 传入对应的信息，可以关闭对应会话窗口。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                connect_id:
+                  description: 实例的id
+                  type: string
+                  example: ${connect_id}
+                schema_id:
+                  description: schema的id
+                  type: string
+                  example: ${schema_id}
+                token:
+                  description: sql窗口的token
+                  type: string
+                  example: ${sql_token}
+              required:
+                - connect_id
+                - schema_id
+                - token
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/CloseSessionResponse'
+components:
+  schemas:
+    CloseSessionResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          type: string
+          description: 接口成功信息
+      required:
+        - status
+        - message
+        - data

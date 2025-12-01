@@ -1,0 +1,181 @@
+openapi: 3.0.0
+info:
+  title: sql执行的接口
+  description: 该 API 用于用户执行sql。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/sql/executes/sql:
+    post:
+      operationId: sql
+      summary: 执行sql
+      description: 执行sql。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                sqls:
+                  description: 预检查后的sql
+                  type: string
+                  example: ${sqls}
+                task_id:
+                  description: 任务
+                  type: string
+                  example: ""
+                serial_number:
+                  description: 未知
+                  type: integer
+                  example: 1
+                limit:
+                  description: 分页
+                  type: integer
+                  example: 200
+                offset:
+                  description: 大小
+                  type: integer
+                  example: 0
+                origin:
+                  description: 未知
+                  type: integer
+                  example: 1
+                connect_id:
+                  description: 实例的id
+                  type: string
+                  example: ${connect_id}
+                schema_id:
+                  description: schema的id
+                  type: string
+                  example: ${schema_id}
+                charset:
+                  description: 字符集
+                  type: string
+                  example: ""
+                token:
+                  description: sql窗口的token
+                  type: string
+                  example: ${sql_token}
+                isSqlWindow:
+                  description: 来源
+                  type: boolean
+                  example: true
+                is_account_conn:
+                  description: 是否是账号直连
+                  type: integer
+                  example: 0
+                is_error_continue:
+                  description: 未知
+                  type: boolean
+                  example: true
+                pattern:
+                  description: 未知
+                  type: integer
+                  example: 2
+                line_feed:
+                  description: 未知
+                  type: integer
+                  example: 0
+                auto_select_sql:
+                  description: 自动选择sql
+                  type: integer
+                  example: 0
+                date_format:
+                  description: 日期格式
+                  type: string
+                  example: "yyyy-MM-dd"
+                time_format:
+                  description: 时间格式
+                  type: string
+                  example: "HH:mm:ss"
+                date_time_format:
+                  description: 时间格式
+                  type: string
+                  example: "yyyy-MM-dd HH:mm:ss.SSS"
+                use_native_format:
+                  description: 未知
+                  type: boolean
+                  example: true
+                prefs:
+                  description: sqlserver的首选项
+                  type: string
+                  example: ${prefs}
+                auto_connect:
+                  description: 是否自动恢复链接
+                  type: boolean
+                  example: false
+                font_size:
+                  description: 字体的大小
+                  type: integer
+                  example: 14
+                theme:
+                  description: 主题
+                  type: string
+                  example: 0
+                short_connect:
+                  description: 是否短连接
+                  type: boolean
+                  example: false
+                smart_commit:
+                  description: 未知
+                  type: boolean
+                  example: false
+                is_auto_commit:
+                  description: 是否自动提交
+                  type: boolean
+                  example: true
+              required:
+                - sqls
+                - connect_id
+                - schema_id
+                - token
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/SqlResponse'
+components:
+  schemas:
+    SqlResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/SqlInfo'
+      required:
+        - status
+        - message
+        - data
+    SqlInfo:
+      type: object
+      properties:
+        task_id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        stage:
+          type: string
+          nullable: true
+        job_error:
+          type: string
+          nullable: true
+        token:
+          type: string
+        exec:
+          type: string
+          nullable: true

@@ -1,0 +1,70 @@
+openapi: 3.0.0
+info:
+  title: 创建组织
+  description: 该 API 用于创建系统内部的组织。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/system/organizations:
+    post:
+      operationId: create_organization
+      summary: 创建组织
+      description: 创建一个组织。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                comment:
+                  description: 组织的描述
+                  type: string
+                  example: 内部用户，用于进行自动化测试
+                name:
+                  description: 组织的名称
+                  type: string
+                  example: ${organization_name}
+                pid:
+                  description: 父组织的id
+                  type: integer
+                  example: 0
+              required:
+                - name
+                - comment
+      responses:
+        "200":
+          description: 新增成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/CreateOrganizations'
+components:
+  schemas:
+    # 数据模型
+    CreateOrganizations:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/OrganizationInfo'
+      required:
+        - status
+        - message
+        - data
+    OrganizationInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true

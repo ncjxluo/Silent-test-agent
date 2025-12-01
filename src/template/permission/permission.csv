@@ -1,0 +1,11 @@
+autotest-mysql,all_instance_permission,"""select_instance_auth"",""statistics_instance_auth"",""insert_instance_auth"",""update_instance_auth"",""delete_instance_auth"",""truncate_instance_auth"",""drop_instance_auth"",""create_instance_auth"",""alter_instance_auth"",""call_instance_auth"",""export_instance_auth""",2,1,instance
+autotest-mysql,select_statistics_instance_permission,"""select_instance_auth"",""statistics_instance_auth""",2,1,instance
+autotest-mysql,select_instance_permission,"""select_instance_auth""",2,1,instance
+autotest-mysql,statistics_instance_permission,"""statistics_instance_auth""",2,1,instance
+autotest-mysql,insert_instance_permission,"""insert_instance_auth""",2,1,instance
+autotest-mysql,update_instance_permission,"""update_instance_auth""",2,1,instance
+autotest-mysql,delete_instance_permission,"""delete_instance_auth""",2,1,instance
+autotest-mysql,truncate_instance_permission,"""truncate_instance_auth""",2,1,instance
+autotest-mysql,drop_instance_permission,""drop_instance_auth""",2,1,instance
+autotest-mysql,call_exec_instance_permission,"""call_instance_auth""",2,1,instance
+autotest-mysql,export_instance_permission,"""export_instance_auth""",2,1,instance

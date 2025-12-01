@@ -1,0 +1,165 @@
+# login1.yaml
+openapi: 3.0.0
+info:
+  title: 实例树接口
+  description: 该 API 用于获取DataCaptain的纳管实例的接口。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: http://192.168.3.137:7080
+    description: 接口测试服务器
+paths:
+  /api/v1/sql/trees/connection:
+    get:
+      operationId: sql-tree-connection
+      summary: 展示实例树的接口
+      description: 工作台首页展示实例树的接口。
+      parameters:
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: 排序的字段，默认按照创建时间倒序
+          example: 0
+        - in: query
+          name: order
+          schema:
+            type: string
+          description: 排序的方式，默认是降序
+          example: 0
+        - in: query
+          name: bitwise_and_pattern
+          schema:
+            type: string
+          description: 实例模式（安全协同，账号直连）
+          example: 0
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/ConnectionResponse'
+components:
+  schemas:
+    ConnectionResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/InstanceTree'
+      required:
+        - status
+        - message
+        - data
+    InstanceTree:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        disable_top:
+          type: string
+        pid:
+          type: string
+        type:
+          type: integer
+        category_name:
+          type: string
+        instance_list:
+          $ref: '#/components/schemas/InstanceInfo'
+    InstanceInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: false
+        key:
+          type: string
+          nullable: false
+        title:
+          type: string
+          nullable: false
+        icon:
+          type: integer
+          nullable: false
+        type:
+          type: string
+          nullable: false
+        isLeaf:
+          type: boolean
+          nullable: false
+        isopen:
+          type: boolean
+          nullable: false
+        pid:
+          type: boolean
+          nullable: false
+        icon_active:
+          type: string
+          nullable: false
+        connection_desc:
+          type: string
+          nullable: false
+        environment:
+          type: integer
+          nullable: false
+        pattern:
+          type: object
+          nullable: false
+        ip:
+          type: string
+          nullable: false
+        connect_id:
+          type: string
+          nullable: false
+        instance_name:
+          type: string
+          nullable: false
+        instance_remark:
+          type: string
+          nullable: false
+        username:
+          type: string
+          nullable: false
+        db_type:
+          type: integer
+          nullable: false
+        service_name:
+          type: string
+          nullable: false
+        db_name:
+          type: string
+          nullable: false
+        category_name:
+          type: string
+          nullable: false
+        connect_mode:
+          type: integer
+          nullable: false
+        port:
+          type: string
+          nullable: false
+        entity:
+          type: string
+          nullable: false
+        category_id:
+          type: string
+          nullable: false
+        is_topped:
+          type: boolean
+          nullable: false
+        can_session_window:
+          type: integer
+          nullable: false
+        can_compile_invalid:
+          type: integer
+          nullable: false

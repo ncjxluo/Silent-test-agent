@@ -1,0 +1,72 @@
+# login1.yaml
+openapi: 3.0.0
+info:
+  title: 授予用户权限
+  description: 该 API 用于给用户授予权限。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  # 获取所有用户的接口
+  /api/pe/permission/allots/grant:
+    post:
+      operationId: grant_auth
+      summary: 授予操作权限
+      description: 授予操作权限。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                term:
+                  description: 未知
+                  type: integer
+                  example: 9
+                term_from:
+                  description: 未知
+                  type: boolean
+                  example: false
+                term_to:
+                  description: 未知
+                  type: boolean
+                  example: false
+                base_type:
+                  description: 未知
+                  type: integer
+                  example: 1
+                apply_content:
+                  description: 未知
+                  type: object
+                  example: {"origin": 2,"resources": [{"base_type": 1,"apply_type": 0,"item": [{"connect_id": "${connect_id}","object_type": "${object_type}","entity": null,"db_type": "${db_type}"}],"operation": "${operation}","operation_type": "${operation_type}","users": [{"display_name": "${system_user_name}(${system_user_name})","uuid": "${sys_username_uuid}"}]}]}
+              required:
+                - apply_content
+      responses:
+        "200":
+          description: 授权成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/GrantAuthResponse'
+components:
+  schemas:
+    GrantAuthResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          type: string
+      required:
+        - status
+        - message
+        - data

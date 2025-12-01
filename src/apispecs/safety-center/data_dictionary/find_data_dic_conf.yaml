@@ -1,0 +1,51 @@
+openapi: 3.0.0
+info:
+  title: 查找数据字典
+  description: 该 API 用于查询数据字典中的某个key。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/config/data-dictionary-config:
+    get:
+      operationId: find_data_dict_config
+      summary: 获取数据字典
+      description: 查找字典详细信息
+      parameters:
+        - in: query
+          name: dict_key
+          schema:
+            type: integer
+          description: 字典的key
+          example: ${dict_key}
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/DictKey'
+components:
+  schemas:
+    DictKey:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          type: array
+          items:
+            type: object
+      required:
+        - status
+        - message
+        - data

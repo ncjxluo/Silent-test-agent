@@ -1,0 +1,210 @@
+openapi: 3.0.0
+info:
+  title: 测试数据库实例的创建
+  description: 该 API 创建数据库的实力。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/config/database-connections:
+    post:
+      operationId: create_connection
+      summary: 保存实例
+      description: 测试并保存实例
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                auth_source:
+                  description: 认证方式
+                  type: integer
+                  example: 0
+                authentication_parameters:
+                  description: 认证的参数
+                  type: object
+                  example: {"license_name": null,"ssl_name": null,"is_ssl": 0,"cert_name": null}
+                category_id:
+                  description: 业务系统
+                  type: string
+                  example: unclassified
+                commit_pattern:
+                  description: 未知
+                  type: string
+                  example: null
+                connections_limit:
+                  description: 未知
+                  type: integer
+                  example: 0
+                db_type:
+                  description: 数据库类型
+                  type: string
+                  example: ${db_type}
+                dblink_name:
+                  description: 未知
+                  type: string
+                  example: null
+                driver_properties:
+                  description: 驱动属性
+                  type: string
+                  example: ${driver_properties}
+                entity:
+                  description: 实体
+                  type: string
+                  example: null
+                environment:
+                  description: 环境标签
+                  type: integer
+                  example: ${system_environment}
+                executor:
+                  description: 执行器标识
+                  type: integer
+                  example: 0
+                extended_attributes:
+                  description: 其他的扩展属性
+                  type: string
+                  example: []
+                id:
+                  description: 未知
+                  type: string
+                  example: null
+                instance_name:
+                  description: 实例名称
+                  type: string
+                  example: ${instance_name}
+                instance_role_id:
+                  description: 实例角色
+                  type: string
+                  example: ${instance_role_id}
+                ip:
+                  description: ip地址
+                  type: string
+                  example: ${instance_ip}
+                is_dblink:
+                  description: 未知
+                  type: integer
+                  example: 0
+                is_default_database:
+                  description: 未知
+                  type: integer
+                  example: 0
+                keep_alive_time:
+                  description: 未知
+                  type: string
+                  example: null
+                label_id:
+                  description: 实例标签
+                  type: string
+                  example: ${instance_label_id}
+                manager_ids:
+                  description: 管理员标识
+                  type: string
+                  example: ${manager_id}
+                maximum_context_size:
+                  description: 未知
+                  type: string
+                  example: null
+                network_timeout:
+                  description: 网络超时
+                  type: string
+                  example: 0
+                password:
+                  description: 密码
+                  type: string
+                  example: ${instance_password}
+                pattern:
+                  description: 实例模式，安全协同
+                  type: string
+                  example: [2]
+                port:
+                  description: 端口
+                  type: string
+                  example: ${instance_port}
+                query_timeout:
+                  description: 查询超时
+                  type: string
+                  example: null
+                security_rule_set_id:
+                  description: 安全规则集
+                  type: string
+                  example: ${security_rule_set_id}
+                sensitive_manager_ids:
+                  description: 敏感管理员标识
+                  type: string
+                  example: ${sensitive_manager_id}
+                support_async:
+                  description: 异步查询
+                  type: integer
+                  example: 0
+                username:
+                  description: 用户名
+                  type: string
+                  example: ${instance_username}
+                verified:
+                  description: 连通性测试结果
+                  type: integer
+                  example: 1
+              required:
+                - auth_source
+                - authentication_parameters
+                - category_id
+                - commit_pattern
+                - connections_limit
+                - db_type
+                - dblink_name
+                - driver_properties
+                - entity
+                - environment
+                - executor
+                - extended_attributes
+                - id
+                - instance_name
+                - instance_role_id
+                - ip
+                - is_dblink
+                - is_default_database
+                - keep_alive_time
+                - label_id
+                - manager_ids
+                - maximum_context_size
+                - network_timeout
+                - password
+                - pattern
+                - port
+                - query_timeout
+                - security_rule_set_id
+                - sensitive_manager_ids
+                - support_async
+                - username
+                - verified
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/Instance'
+components:
+  schemas:
+    # 数据模型
+    Instance:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          type: string
+      required:
+        - status
+        - message
+        - data

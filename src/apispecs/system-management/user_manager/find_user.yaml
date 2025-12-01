@@ -1,0 +1,79 @@
+openapi: 3.0.0
+info:
+  title: 获取系统内用户
+  description: 该 API 用于获取系统的用户。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/system/users:
+    get:
+      operationId: find_system_user
+      summary: 获取系统内用户
+      description: 获取系统内的用户
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: 分页
+          example: 0
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: 大小
+          example: 10
+        - in: query
+          name: keywords
+          schema:
+            type: string
+          description: 系统用户名称
+          example: ${system_user_name}
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/Users'
+components:
+  schemas:
+    Users:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/UsersInfo'
+      required:
+        - status
+        - message
+        - data
+    UsersInfo:
+      type: object
+      properties:
+        pagination:
+          type: object
+          properties:
+            page:
+              type: integer
+            pages:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+        records:
+          type: array
+          items:
+            type: object

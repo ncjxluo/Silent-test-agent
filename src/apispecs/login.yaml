@@ -1,0 +1,174 @@
+# login1.yaml
+openapi: 3.0.0
+info:
+  title: 用户登录接口
+  description: 该 API 用于用户登录DataCaptain的接口。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  # 获取所有用户的接口
+  /api/pe/system/users/login:
+    post:
+      operationId: user_login
+      summary: 内部用户登录
+      description: 传入账号密码,可以登录系统。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                username:
+                  description: 用户的登录名
+                  type: string
+                  example: ${username}
+                password:
+                  description: 用户的密码
+                  type: string
+                  example: ${password}
+                is_inner:
+                  description: 未知
+                  type: integer
+                  example: 0
+              required:
+                - username
+                - password
+      responses:
+        "200":
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/LoginResponse'
+components:
+  schemas:
+    # 用户数据模型
+    LoginResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/UserInfo'
+      required:
+        - status
+        - message
+        - data
+    UserInfo:
+      type: object
+      properties:
+        avatar_url:
+          type: string
+          nullable: true
+        birthday:
+          type: string
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+        create_mode:
+          type: integer
+        dn:
+          type: string
+          nullable: true
+        email:
+          type: string
+        extra:
+          type: string
+        gender:
+          type: integer
+        gmt_create:
+          type: string
+          format: date-time
+        gmt_modified:
+          type: string
+          format: date-time
+        id:
+          type: string
+        is_active:
+          type: integer
+        is_def_pwd:
+          type: integer
+        is_first_login:
+          type: integer
+        is_new:
+          type: integer
+        is_super_admin:
+          type: integer
+        last_reset_pass:
+          type: string
+          format: date-time
+        open_id:
+          type: string
+          nullable: true
+        org_ids:
+          type: string
+        password_expire_datetime:
+          type: string
+        password_expire_time:
+          type: string
+        phone:
+          type: string
+        platform:
+          type: integer
+        r_org_ids:
+          type: string
+        real_name:
+          type: string
+        role_ids:
+          type: string
+        salt:
+          type: string
+        totp_key:
+          type: string
+          nullable: true
+        totp_status:
+          type: integer
+        unique_key:
+          type: string
+        user_superior:
+          type: array
+          items:
+            type: object
+        username:
+          type: string
+        user_principal_name:
+          type: string
+          nullable: true
+        organization_id:
+          type: array
+          items:
+            type: string
+        organization_name:
+          type: array
+          items:
+            type: string
+        role_id:
+          type: array
+          items:
+            type: string
+        role_name:
+          type: array
+          items:
+            type: string
+        display_name:
+          type: string
+        reset_pass:
+          type: object
+          properties:
+            status:
+              type: integer
+            msg:
+              type: string
+        session_id:
+          type: string

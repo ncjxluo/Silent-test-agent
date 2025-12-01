@@ -1,0 +1,138 @@
+openapi: 3.0.0
+info:
+  title: 用户打开会话的接口
+  description: 该 API 用于用户在sql窗口打开会话。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/sql/executes/open-session:
+    post:
+      operationId: open_session
+      summary: 打开会话
+      description: 传入对应的信息，可以打开对应会话窗口。
+      requestBody:
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                auto_commit:
+                  description: 是否自动提交
+                  type: boolean
+                  example: true
+                auto_connect:
+                  description: 是否自动恢复链接
+                  type: boolean
+                  example: false
+                connect_id:
+                  description: 实例的id
+                  type: string
+                  example: ${connect_id}
+                date_format:
+                  description: 日期格式
+                  type: string
+                  example: "yyyy-MM-dd"
+                date_time_format:
+                  description: 时间格式
+                  type: string
+                  example: "yyyy-MM-dd HH:mm:ss.SSS"
+                font_size:
+                  description: 字体的大小
+                  type: integer
+                  example: 14
+                is_account_conn:
+                  description: 是否是账号直连
+                  type: integer
+                  example: 0
+                line_feed:
+                  description: 未知
+                  type: integer
+                  example: 0
+                prefs:
+                  description: sqlserver的首选项
+                  type: string
+                  example: "2,3,5,6,7"
+                schema_id:
+                  description: schema的id
+                  type: string
+                  example: ${schema_id}
+                short_connect:
+                  description: 是否短连接
+                  type: boolean
+                  example: false
+                theme:
+                  description: 主题
+                  type: integer
+                  example: 0
+                time_format:
+                  description: 时间格式
+                  type: string
+                  example: "HH:mm:ss"
+                token:
+                  description: sql窗口的token
+                  type: string
+                  example: ${sql_token}
+                use_native_format:
+                  description: 未知
+                  type: boolean
+                  example: true
+              required:
+                - connect_id
+                - schema_id
+                - token
+                - origin
+                - is_account_conn
+                - line_feed
+                - auto_select_sql
+                - date_format
+                - time_format
+                - date_time_format
+                - use_native_format
+                - prefs
+                - auto_connect
+                - font_size
+                - theme
+                - short_connect
+                - auto_commit
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/OpenSessionResponse'
+components:
+  schemas:
+    OpenSessionResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/SessionInfo'
+      required:
+        - status
+        - message
+        - data
+    SessionInfo:
+      type: object
+      properties:
+        body:
+          type: string
+          nullable: true
+        code:
+          type: integer
+        msg:
+          type: string
+        success:
+          type: boolean

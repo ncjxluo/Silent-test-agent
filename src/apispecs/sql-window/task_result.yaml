@@ -1,0 +1,102 @@
+openapi: 3.0.0
+info:
+  title: 获取sql执行结果
+  description: 该 API 用于获取sql执行结果
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/sql/executes/task-result:
+    get:
+      operationId: task_result
+      summary: 获取sql执行结果
+      description: 获取sql执行结果
+      parameters:
+        - in: query
+          name: token
+          schema:
+            type: string
+          description: 窗口的token
+          example: ${sql_token}
+        - in: query
+          name: connect_id
+          schema:
+            type: string
+          description: 实例的id
+          example: ${connect_id}
+        - in: query
+          name: schema_id
+          schema:
+            type: string
+          description: schema的id
+          example: ${schema_id}
+        - in: query
+          name: task_id
+          schema:
+            type: string
+          description: 系统用户名称
+          example: ${task_id}
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/TaskResultResponse'
+components:
+  schemas:
+    TaskResultResponse:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/TaskResultInfo'
+      required:
+        - status
+        - message
+        - data
+    TaskResultInfo:
+      type: object
+      properties:
+        task_info:
+          type: object
+          properties:
+            task_id:
+              type: string
+            name:
+              type: string
+            status:
+              type: integer
+            stage:
+              type: integer
+            job_error:
+              type: string
+            token:
+              type: string
+            exec:
+              type: string
+        execute_info:
+          type: object
+          properties:
+            transfer_result:
+              type: string
+            blob_data_result:
+              type: string
+            task_id:
+              type: integer
+            out_put_list:
+              type: integer
+            query_results:
+              type: array
+              items:
+                type: string

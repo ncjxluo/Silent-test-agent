@@ -1,0 +1,45 @@
+openapi: 3.0.0
+info:
+  title: 获取系统组织
+  description: 该 API 用于获取系统的组织列表。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/pe/system/organizations:
+    get:
+      operationId: find_organizations
+      summary: 获取系统内组织
+      description: 获取系统内的组织
+      parameters: []
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/Organizations'
+components:
+  schemas:
+    Organizations:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          type: array
+          items:
+            type: object
+      required:
+        - status
+        - message
+        - data

@@ -1,0 +1,111 @@
+<TestPlan name="创建组织">
+    <ThreadGroup name="创建组织线程组" threads="3">
+        <VariableDataSet name="用户定义的变量">
+            <stringProp name="u:username">admin</stringProp>
+            <stringProp name="u:system_user_name">admin</stringProp>
+<!--            <stringProp name="u:system_role_name">普通用户</stringProp>-->
+        </VariableDataSet>
+<!--        <CSVDataSet name="sqlData" filename="database/db.csv" >-->
+<!--            <stringProp name="variableNames">instance_name,db_type,instance_ip,instance_port,instance_username,instance_password,security_keywords</stringProp>-->
+<!--        </CSVDataSet>-->
+        <DBDataSet name="sqlData">
+            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="port">3306</stringProp>
+            <stringProp name="username">admin</stringProp>
+            <stringProp name="password">whdata123</stringProp>
+            <stringProp name="database">strtest</stringProp>
+            <stringProp name="sql">SELECT db_name,db_type,db_ip,db_port,db_uname,db_passwd,db_safety_rules FROM `strtest`.`db_template`;</stringProp>
+            <stringProp name="variableNames">instance_name,db_type,instance_ip,instance_port,instance_username,instance_password,security_keywords</stringProp>
+        </DBDataSet>
+        <HttpSampler name="获取auth">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">get_auth</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <HeadExtractor name="header提取器" parentname="获取auth">
+                <HeaderProp name="h:Auth">$.data[0]</HeaderProp>
+             </HeadExtractor>
+        </HttpSampler>
+        <HttpSampler name="查询用户的id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_system_user</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查询用户的id">
+                <ExpressionProp name="e:manager_id">$.data.records[0].unique_key</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="查询敏感管理员的id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_system_user</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查询敏感管理员的id">
+                <ExpressionProp name="e:sensitive_manager_id">$.data.records[0].unique_key</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+
+        <HttpSampler name="查询驱动属性">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_driver_properties</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查询驱动属性">
+                <ExpressionProp name="e:driver_properties">$.data</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+
+        <HttpSampler name="查询安全规则id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_security_rules</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查询安全规则id">
+                <ExpressionProp name="e:security_rule_set_id">$.data.records[0].id</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+
+        <HttpSampler name="查询实例标签id">
+            <stringProp name="h:dict_key">instance_label</stringProp>
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_data_dict_config</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查询实例标签id">
+                <ExpressionProp name="e:instance_label_id">$.data[0].original_id</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+
+        <HttpSampler name="查询实例角色id">
+            <stringProp name="h:dict_key">instance_role_config</stringProp>
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_data_dict_config</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查询实例角色id">
+                <ExpressionProp name="e:instance_role_id">$.data[0].id</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+
+        <HttpSampler name="查询实例环境id">
+            <stringProp name="h:dict_key">instance_env</stringProp>
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_data_dict_config</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查询实例环境id">
+                <ExpressionProp name="e:system_environment">$.data[0].original_id</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+
+        <HttpSampler name="创建实例">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">create_connection</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ResponseAssertion name="响应断言" parentname="创建实例" selfVerification="false">
+                <AssertProp name="a:message">操作成功</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+    </ThreadGroup>
+</TestPlan>

@@ -1,0 +1,77 @@
+openapi: 3.0.0
+info:
+  title: 查找安全规则
+  description: 该 API 用于查询安全规则列表。
+  version: 6.0.2
+  contact:
+    name: wcheng.luo
+servers:
+  - url: ${scheme}://${host}:${scheme_port}
+    description: 接口测试服务器
+paths:
+  /api/v1/system/security-rules:
+    get:
+      operationId: find_security_rules
+      summary: 获取安全规则
+      description: 查找规则id等信息
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: 名称
+          example: 20
+        - in: query
+          name: offset
+          schema:
+            type: integer
+          description: 名称
+          example: 0
+        - in: query
+          name: keywords
+          schema:
+            type: string
+          description: 名称
+          example: ${security_keywords}
+      responses:
+        "200":
+          description: 操作成功
+          content:
+            application/json:
+              schema:
+                type: object
+                items:
+                  $ref: '#/components/schemas/SecurityRules'
+components:
+  schemas:
+    SecurityRules:
+      type: object
+      properties:
+        status:
+          type: integer
+          description: 接口成功状态码
+        message:
+          type: string
+          description: 接口成功信息
+        data:
+          $ref: '#/components/schemas/RulesInfo'
+      required:
+        - status
+        - message
+        - data
+    RulesInfo:
+      type: object
+      properties:
+        pagination:
+          type: string
+          properties:
+            page:
+              type: integer
+            pages:
+              type: integer
+            per_page:
+              type: integer
+            total:
+              type: integer
+        records:
+          type: array

@@ -1,0 +1,371 @@
+<TestPlan name="oracle test">
+    <BeforeThreadGroup name="跑铺底数据的语句(创建库)" threads="10" enabled="True" ramp_up="1">
+        <VariableDataSet name="用户定义的变量">
+            <stringProp name="u:username">admin</stringProp>
+            <stringProp name="u:instance_key">120autotest-oracle</stringProp>
+            <stringProp name="u:schema_key">SYSTEM</stringProp>
+            <stringProp name="u:dbtype">1</stringProp>
+            <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
+            <stringProp name="u:except">操作成功</stringProp>
+        </VariableDataSet>
+        <PythonShellSampler name="创建uuid">
+            <pythonProp name="p:code">
+                import uuid
+                sql_token = str(uuid.uuid4())
+            </pythonProp>
+        </PythonShellSampler>
+        <HttpSampler name="获取auth">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">get_auth</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <HeadExtractor name="header提取器" parentname="获取auth">
+                <HeaderProp name="h:Auth">$.data[0]</HeaderProp>
+             </HeadExtractor>
+        </HttpSampler>
+        <DBDataSet name="sqlData">
+            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="port">3306</stringProp>
+            <stringProp name="username">admin</stringProp>
+            <stringProp name="password">whdata123</stringProp>
+            <stringProp name="database">str</stringProp>
+            <stringProp name="sql">
+                SELECT
+                    REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
+                FROM str_sql_template st
+                JOIN str_user_template ut
+                  ON ut.id in (1)
+                WHERE st.sql_exec_timing = 'before' and st.sql_lang like '%create user%'
+                  AND st.sql_type = 1;
+            </stringProp>
+            <stringProp name="variableNames">sql</stringProp>
+        </DBDataSet>
+        <HttpSampler name="查找实例的connect_id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_database_info</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查找实例的connect_id">
+                <ExpressionProp name="e:connect_id">$.data.records[0].unique_key</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="查找schema的schema_id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_schema_info</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查找schema的schema_id">
+                <ExpressionProp name="e:schema_id">$.data.records[0].schema_id</ExpressionProp>
+            </ExpressionExtractor>
+            <ResponseAssertion name="响应断言" parentname="查找schema的schema_id" selfVerification="false" assert_type="match">
+                <AssertProp name="a:message">操作成功</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+        <HttpSampler name="打开会话">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">open_session</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+        </HttpSampler>
+        <HttpSampler name="预检查">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">precheck</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="预检查">
+                <ExpressionProp name="e:sqls">$.data.sqls</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="执行sql">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">sql</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="执行sql">
+                <ExpressionProp name="e:task_id">$.data.task_id</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="获取结果">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">task_result</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="获取结果">
+                <ExpressionProp name="e:task_info_stage">$.data.task_info.stage</ExpressionProp>
+            </ExpressionExtractor>
+            <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false" assert_type="match">
+                <AssertProp name="a:$.data.execute_info.query_results[*].message">执行成功 or 影响行数</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+        <WhileController name="循环控制结果是否拿完整" condition="int(${task_info_stage}) != len(${sqls})" is_variable="True" variable_position="ExpressionExtractor">
+            <HttpSampler name="获取结果">
+                <CacheDataSet name="cache data set">
+                    <cacheProp name="c:interface">task_result</cacheProp>
+                    <cacheProp name="c:env">all</cacheProp>
+                </CacheDataSet>
+                <ExpressionExtractor name="提取" parentname="获取结果">
+                    <ExpressionProp name="e:task_info_stage">$.data.task_info.stage</ExpressionProp>
+                </ExpressionExtractor>
+                <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false" assert_type="match">
+                    <AssertProp name="a:$.data.execute_info.query_results[*].message">执行成功 or 影响行数</AssertProp>
+                </ResponseAssertion>
+            </HttpSampler>
+        </WhileController>
+        <HttpSampler name="关闭会话">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">close_session</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+        </HttpSampler>
+        <ResultReportingListener name="oracle test"/>
+    </BeforeThreadGroup>
+    <BeforeThreadGroup name="跑铺底数据的语句(非创建库)" threads="10" enabled="True" ramp_up="1">
+        <VariableDataSet name="用户定义的变量">
+            <stringProp name="u:username">admin</stringProp>
+            <stringProp name="u:instance_key">120autotest-oracle</stringProp>
+            <stringProp name="u:schema_key">SYSTEM</stringProp>
+            <stringProp name="u:dbtype">1</stringProp>
+            <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
+            <stringProp name="u:except">操作成功</stringProp>
+        </VariableDataSet>
+        <PythonShellSampler name="创建uuid">
+            <pythonProp name="p:code">
+                import uuid
+                sql_token = str(uuid.uuid4())
+            </pythonProp>
+        </PythonShellSampler>
+        <HttpSampler name="获取auth">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">get_auth</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <HeadExtractor name="header提取器" parentname="获取auth">
+                <HeaderProp name="h:Auth">$.data[0]</HeaderProp>
+             </HeadExtractor>
+        </HttpSampler>
+        <DBDataSet name="sqlData">
+            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="port">3306</stringProp>
+            <stringProp name="username">admin</stringProp>
+            <stringProp name="password">whdata123</stringProp>
+            <stringProp name="database">str</stringProp>
+            <stringProp name="sql">
+                SELECT
+                    REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
+                FROM str_sql_template st
+                JOIN str_user_template ut
+                  ON ut.id in (1)
+                WHERE st.sql_exec_timing = 'before' and st.sql_lang NOT like '%create user%'
+                  AND st.sql_type = 1;
+            </stringProp>
+            <stringProp name="variableNames">sql</stringProp>
+        </DBDataSet>
+        <HttpSampler name="查找实例的connect_id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_database_info</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查找实例的connect_id">
+                <ExpressionProp name="e:connect_id">$.data.records[0].unique_key</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="查找schema的schema_id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_schema_info</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查找schema的schema_id">
+                <ExpressionProp name="e:schema_id">$.data.records[0].schema_id</ExpressionProp>
+            </ExpressionExtractor>
+            <ResponseAssertion name="响应断言" parentname="查找schema的schema_id" selfVerification="false" assert_type="match">
+                <AssertProp name="a:message">操作成功</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+        <HttpSampler name="打开会话">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">open_session</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+        </HttpSampler>
+        <HttpSampler name="预检查">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">precheck</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="预检查">
+                <ExpressionProp name="e:sqls">$.data.sqls</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="执行sql">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">sql</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="执行sql">
+                <ExpressionProp name="e:task_id">$.data.task_id</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="获取结果">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">task_result</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="获取结果">
+                <ExpressionProp name="e:task_info_stage">$.data.task_info.stage</ExpressionProp>
+            </ExpressionExtractor>
+            <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false" assert_type="match">
+                <AssertProp name="a:$.data.execute_info.query_results[*].message">执行成功 or 影响行数</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+        <WhileController name="循环控制结果是否拿完整" condition="int(${task_info_stage}) != len(${sqls})" is_variable="True" variable_position="ExpressionExtractor">
+            <HttpSampler name="获取结果">
+                <CacheDataSet name="cache data set">
+                    <cacheProp name="c:interface">task_result</cacheProp>
+                    <cacheProp name="c:env">all</cacheProp>
+                </CacheDataSet>
+                <ExpressionExtractor name="提取" parentname="获取结果">
+                    <ExpressionProp name="e:task_info_stage">$.data.task_info.stage</ExpressionProp>
+                </ExpressionExtractor>
+                <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false" assert_type="match">
+                    <AssertProp name="a:$.data.execute_info.query_results[*].message">执行成功 or 影响行数</AssertProp>
+                </ResponseAssertion>
+            </HttpSampler>
+        </WhileController>
+        <HttpSampler name="关闭会话">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">close_session</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+        </HttpSampler>
+        <ResultReportingListener name="oracle test"/>
+    </BeforeThreadGroup>
+    <ThreadGroup name="真实执行的sql" threads="10" enabled="False" ramp_up="1">
+        <VariableDataSet name="用户定义的变量">
+            <stringProp name="u:username">admin</stringProp>
+             <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
+        </VariableDataSet>
+        <DBDataSet name="sqlData">
+            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="port">3306</stringProp>
+            <stringProp name="username">admin</stringProp>
+            <stringProp name="password">whdata123</stringProp>
+            <stringProp name="database">str</stringProp>
+            <stringProp name="sql">
+                SELECT dbname,schemaname,dbtype,username,`sql`,expect from str_test_template where username = 'all_instance_auth' and dbtype = 1;
+            </stringProp>
+            <stringProp name="variableNames">instance_key,schema_key,dbtype,exec_username,sql,expect</stringProp>
+        </DBDataSet>
+        <HttpSampler name="获取auth">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">get_auth</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <HeadExtractor name="header提取器" parentname="获取auth">
+                <HeaderProp name="h:Auth">$.data[0]</HeaderProp>
+             </HeadExtractor>
+        </HttpSampler>
+        <HttpSampler name="查找实例的connect_id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_database_info</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查找实例的connect_id">
+                <ExpressionProp name="e:connect_id">$.data.records[0].unique_key</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="查找schema的schema_id">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">find_schema_info</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="查找schema的schema_id">
+                <ExpressionProp name="e:schema_id">$.data.records[0].schema_id</ExpressionProp>
+            </ExpressionExtractor>
+            <ResponseAssertion name="响应断言" parentname="查找schema的schema_id" selfVerification="false">
+                <AssertProp name="a:message">操作成功</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+        <PythonShellSampler name="创建uuid">
+            <pythonProp name="p:code">
+                import uuid
+                sql_token = str(uuid.uuid4())
+            </pythonProp>
+        </PythonShellSampler>
+
+        <HttpSampler name="获取auth1">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">get_auth</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <VariableRename name="参数变量重命名">
+                <VariableProp name="vr:username">${exec_username}</VariableProp>
+            </VariableRename>
+            <HeadExtractor name="header提取器" parentname="获取auth1">
+                <HeaderProp name="h:Auth">$.data[0]</HeaderProp>
+             </HeadExtractor>
+        </HttpSampler>
+        <HttpSampler name="打开会话">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">open_session</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+        </HttpSampler>
+        <HttpSampler name="预检查">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">precheck</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="预检查">
+                <ExpressionProp name="e:sqls">$.data.sqls</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+        <HttpSampler name="执行sql">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">sql</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="执行sql">
+                <ExpressionProp name="e:task_id">$.data.task_id</ExpressionProp>
+            </ExpressionExtractor>
+        </HttpSampler>
+<!--        <IfController name="根据变量判断是否定时" condition="len(${sqls}) > 1" is_variable="True" variable_position="ExpressionExtractor">-->
+<!--            <ConstantTimer name="等待获取sql" pause_time="10"/>-->
+<!--        </IfController>-->
+        <HttpSampler name="获取结果">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">task_result</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+            <ExpressionExtractor name="提取" parentname="获取结果">
+                <ExpressionProp name="e:task_info_status">$.data.task_info.status</ExpressionProp>
+            </ExpressionExtractor>
+            <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false">
+                <AssertProp name="a:$.data.execute_info.query_results[*].message">${expect}</AssertProp>
+            </ResponseAssertion>
+        </HttpSampler>
+        <WhileController name="循环控制结果是否拿完整" condition="int(${task_info_status}) == 0" is_variable="True" variable_position="ExpressionExtractor">
+            <HttpSampler name="获取结果">
+                <CacheDataSet name="cache data set">
+                    <cacheProp name="c:interface">task_result</cacheProp>
+                    <cacheProp name="c:env">all</cacheProp>
+                </CacheDataSet>
+                <ExpressionExtractor name="提取" parentname="获取结果">
+                    <ExpressionProp name="e:task_info_status">$.data.task_info.status</ExpressionProp>
+                </ExpressionExtractor>
+                <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false" assert_type="match">
+                    <AssertProp name="a:$.data.execute_info.query_results[*].message">${expect}</AssertProp>
+                </ResponseAssertion>
+            </HttpSampler>
+        </WhileController>
+        <HttpSampler name="关闭会话">
+            <CacheDataSet name="cache data set">
+                <cacheProp name="c:interface">close_session</cacheProp>
+                <cacheProp name="c:env">all</cacheProp>
+            </CacheDataSet>
+<!--            <ResponseAssertion name="响应断言" parentname="关闭会话" selfVerification="false">-->
+<!--                <AssertProp name="a:message">${expect}</AssertProp>-->
+<!--            </ResponseAssertion>-->
+        </HttpSampler>
+        <ResultReportingListener name="oracle test"/>
+    </ThreadGroup>
+</TestPlan>
