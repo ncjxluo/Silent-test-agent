@@ -1,8 +1,0 @@
-2025-11-21 10:01:56.999 | ERROR    | src.components.threads.before_thread_group:execute:70 - excute 出错了
-NoneType: None
-2025-11-21 10:01:57.002 | ERROR    | src.components.threads.before_thread_group:execute:70 - excute 出错了
-NoneType: None
-2025-11-21 10:04:46.151 | ERROR    | src.components.threads.before_thread_group:execute:70 - excute 出错了
-NoneType: None
-2025-11-21 10:04:46.152 | ERROR    | src.components.threads.before_thread_group:execute:70 - excute 出错了
-NoneType: None
