@@ -14,6 +14,7 @@ from src.utils.str_log import Log
 from src.models.str_test_suite import StrTestSuite
 from src.models.str_test_plan import StrTestPlan
 from src.models.str_test_case import StrTestCase
+from src.models.str_test_case_step import StrTestCaseStep
 from src.utils.str_db import async_session
 from sqlmodel import select, and_, desc, func
 import src.storage.global_context as global_context
@@ -44,7 +45,8 @@ class ResultReportingListener(Listener):
         async with async_session() as session:
             result = await session.execute(query)
             res = result.first()[0]
-            cases = list()
+            case_steps = list()
+            case_status = 0
             case_id = str(uuid.uuid4())
             step_id = 1
             for key, value in local_ctx.items():
@@ -59,9 +61,9 @@ class ResultReportingListener(Listener):
                         assert_res_details = json.dumps(local_ctx.get(key).get("assert_data").get("res_details"))
                         assert_ver_sign = json.dumps(local_ctx.get(key).get("assert_data").get("ver_sign"))
                         assert_time_sign = local_ctx.get(key).get("assert_data").get("time_sign")
-                    case = StrTestCase(
-                        suite_key = res.suite_key,
-                        plan_key = res.plan_key,
+                    if assert_res_sign == '整体断言:失败':
+                        case_status = 1
+                    case_step = StrTestCaseStep(
                         case_key = case_id,
                         step_id = step_id,
                         step_name = key,
@@ -75,20 +77,28 @@ class ResultReportingListener(Listener):
                         assert_ver_sign=assert_ver_sign,
                         assert_time_sign=assert_time_sign
                     )
-                    cases.append(case)
+                    case_steps.append(case_step)
                     step_id = step_id + 1
-            await self.to_db(cases)
-
-
-    async def to_db(self, data_list):
-        """
-        批量提交报告到数据库
-        :param data_list: 一个需要向数据库提交的数据列表
-        :return:
-        """
-        async with async_session() as session:
-            session.add_all(data_list)
+            case = StrTestCase(
+                suite_key=res.suite_key,
+                plan_key=res.plan_key,
+                case_key=case_id,
+                case_status=case_status
+            )
+            session.add(case)
+            session.add_all(case_steps)
             await session.commit()
+
+
+    # async def to_db(self, data_list):
+    #     """
+    #     批量提交报告到数据库
+    #     :param data_list: 一个需要向数据库提交的数据列表
+    #     :return:
+    #     """
+    #     async with async_session() as session:
+    #         session.add_all(data_list)
+    #         await session.commit()
 
 
 

@@ -1,4 +1,4 @@
-<TestPlan name="mysql_all_instance_auth">
+<TestPlan name="mysql_statis_instance_auth">
     <BeforeThreadGroup name="跑铺底数据的语句(创建库)" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
             <stringProp name="u:username">admin</stringProp>
@@ -34,7 +34,7 @@
                     REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
                 FROM str_sql_template st
                 JOIN str_user_template ut
-                  ON ut.id in (1)
+                  ON ut.id in (3)
                 WHERE st.sql_exec_timing = 'before' and st.sql_lang like '%create database%'
                   AND st.sql_type = 2;
             </stringProp>
@@ -117,7 +117,7 @@
                 <cacheProp name="c:env">all</cacheProp>
             </CacheDataSet>
         </HttpSampler>
-        <ResultReportingListener name="mysql_all_instance_auth"/>
+        <ResultReportingListener name="mysql_statis_instance_auth"/>
     </BeforeThreadGroup>
     <BeforeThreadGroup name="跑铺底数据的语句(非创建库)" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
@@ -154,7 +154,7 @@
                     REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
                 FROM str_sql_template st
                 JOIN str_user_template ut
-                  ON ut.id in (1)
+                  ON ut.id in (3)
                 WHERE st.sql_exec_timing = 'before' and st.sql_lang NOT like '%create database%'
                   AND st.sql_type = 2;
             </stringProp>
@@ -237,7 +237,7 @@
                 <cacheProp name="c:env">all</cacheProp>
             </CacheDataSet>
         </HttpSampler>
-        <ResultReportingListener name="mysql_all_instance_auth"/>
+        <ResultReportingListener name="mysql_statis_instance_auth"/>
     </BeforeThreadGroup>
     <ThreadGroup name="真实执行的sql" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
@@ -251,7 +251,7 @@
             <stringProp name="password">whdata123</stringProp>
             <stringProp name="database">str</stringProp>
             <stringProp name="sql">
-                SELECT dbname,schemaname,dbtype,username,`sql`,expect from str_test_template where username = 'all_instance_auth' and dbtype = 2;
+                SELECT dbname,schemaname,dbtype,username,`sql`,expect from str_test_template where username = 'statis_instance_auth' and dbtype = 2;
             </stringProp>
             <stringProp name="variableNames">instance_key,schema_key,dbtype,exec_username,sql,expect</stringProp>
         </DBDataSet>
@@ -366,6 +366,6 @@
 <!--                <AssertProp name="a:message">${expect}</AssertProp>-->
 <!--            </ResponseAssertion>-->
         </HttpSampler>
-        <ResultReportingListener name="mysql_all_instance_auth"/>
+        <ResultReportingListener name="mysql_statis_instance_auth"/>
     </ThreadGroup>
 </TestPlan>

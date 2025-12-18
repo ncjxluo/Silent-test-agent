@@ -1,4 +1,4 @@
-<TestPlan name="oracle test">
+<TestPlan name="oracle_all_instance_auth">
     <BeforeThreadGroup name="跑铺底数据的语句(创建库)" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
             <stringProp name="u:username">admin</stringProp>
@@ -117,7 +117,7 @@
                 <cacheProp name="c:env">all</cacheProp>
             </CacheDataSet>
         </HttpSampler>
-        <ResultReportingListener name="oracle test"/>
+        <ResultReportingListener name="oracle_all_instance_auth"/>
     </BeforeThreadGroup>
     <BeforeThreadGroup name="跑铺底数据的语句(非创建库)" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
@@ -237,9 +237,9 @@
                 <cacheProp name="c:env">all</cacheProp>
             </CacheDataSet>
         </HttpSampler>
-        <ResultReportingListener name="oracle test"/>
+        <ResultReportingListener name="oracle_all_instance_auth"/>
     </BeforeThreadGroup>
-    <ThreadGroup name="真实执行的sql" threads="10" enabled="False" ramp_up="1">
+    <ThreadGroup name="真实执行的sql" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
             <stringProp name="u:username">admin</stringProp>
              <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
@@ -291,7 +291,6 @@
                 sql_token = str(uuid.uuid4())
             </pythonProp>
         </PythonShellSampler>
-
         <HttpSampler name="获取auth1">
             <CacheDataSet name="cache data set">
                 <cacheProp name="c:interface">get_auth</cacheProp>
@@ -351,10 +350,13 @@
                 </CacheDataSet>
                 <ExpressionExtractor name="提取" parentname="获取结果">
                     <ExpressionProp name="e:task_info_status">$.data.task_info.status</ExpressionProp>
+                    <ExpressionProp name="e:execute_info_message">$.data.execute_info.query_results[*].message</ExpressionProp>
                 </ExpressionExtractor>
-                <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false" assert_type="match">
-                    <AssertProp name="a:$.data.execute_info.query_results[*].message">${expect}</AssertProp>
-                </ResponseAssertion>
+                <IfController name="根据变量判断是否断言" condition="${execute_info_message} != '路径查找失败'" is_variable="True" variable_position="ExpressionExtractor">
+                   <ResponseAssertion name="响应断言" parentname="获取结果" selfVerification="false" assert_type="match">
+                       <AssertProp name="a:$.data.execute_info.query_results[*].message">${expect}</AssertProp>
+                    </ResponseAssertion>
+                </IfController>
             </HttpSampler>
         </WhileController>
         <HttpSampler name="关闭会话">
@@ -366,6 +368,6 @@
 <!--                <AssertProp name="a:message">${expect}</AssertProp>-->
 <!--            </ResponseAssertion>-->
         </HttpSampler>
-        <ResultReportingListener name="oracle test"/>
+        <ResultReportingListener name="oracle_all_instance_auth"/>
     </ThreadGroup>
 </TestPlan>

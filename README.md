@@ -6,7 +6,7 @@ silent-test-agent 目前实现了api接口自动化的agent模块，UI自动化�
 
 ### 1.1 实现思想
 
-1、python + sqlmodel + httpx 等模块，实现的异步请求agent   
+1、python + sqlmodel + httpx 等模块，实现的异步请求agent
 2、python语言版本是3.9.12，理论可以下降到3.8.10
 
 ### 1.2 适用范围

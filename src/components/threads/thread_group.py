@@ -38,6 +38,7 @@ class ThreadGroup(Thread):
                     count = child.data_queue.qsize()
                 if isinstance(child, DBDataSet):
                     count = child.data_queue.qsize()
+            await self.set_task_sum(count)
             sleep_time = self.ramp_up / max_threads
             tasks = []
             semaphore = asyncio.Semaphore(self.threads)

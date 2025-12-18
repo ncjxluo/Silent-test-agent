@@ -38,6 +38,7 @@ class IfController(LogicController):
                     condition = self.substitute(condition, local_ctx.get(item))
         else:
             condition = self.condition
+
         if "路径查找失败" in condition:
             condition = "1 != 1"
 

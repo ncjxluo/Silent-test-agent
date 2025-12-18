@@ -221,15 +221,12 @@ class ResponseAssertion(Assertion):
 
 
     def path_assert(self, data: dict, path: str, except_values: list) -> Tuple[bool, Dict]:
-
         path_search_result = jmespath.search(path, data)
         if path_search_result is None:
             return False, {}
-
         return_dic = {}
         self.assert_date(except_values, path_search_result, return_dic)
         overall = self.check_overall(return_dic)
-
         return overall, return_dic
 
 

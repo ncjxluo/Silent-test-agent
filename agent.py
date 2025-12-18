@@ -48,7 +48,7 @@ def try_start_new_job(suite_name, task_file):
         task_queue.append(task_file)
 
 
-def monitor_jobs():
+def monitor_jobs(suite_name):
     """循环监控：有空位就从队列中取任务执行"""
     while running_jobs or task_queue:
         # 清理已结束的进程
@@ -63,7 +63,7 @@ def monitor_jobs():
         # 尝试从队列启动新的任务
         while task_queue and len(running_jobs) < MAX_JOBS:
             task_file = task_queue.popleft()
-            try_start_new_job(task_file)
+            try_start_new_job(suite_name, task_file)
 
         time.sleep(5)  # 避免空转 CPU
 
@@ -75,7 +75,7 @@ def before_run():
             user_key="a",
             suite_name=suite_name,
             status="running",
-            type="api"  # todo 未完成
+            type="api"
         )
         session.add(suite)
         session.commit()
@@ -99,7 +99,7 @@ def end_run(suite_name) -> None:
 
         suite = session.exec(query).first()
         # suite = result.first()
-        print(suite)
+        # print(suite)
         if suite:
             suite.status = 'finish'
             suite.updated_at = datetime.now()
@@ -109,16 +109,11 @@ def end_run(suite_name) -> None:
 
 if __name__ == "__main__":
     suite_name = before_run()
-    # operations = [
-    #     "testcases/sql/mysqlgather/mysql_testcase1.xml",
-    #     "testcases/sql/oraclegather/oracle_testcase1.xml",
-    # ]
-    operations = [
-            "testcases/permission/grant_auth.xml"
-        ]
+    operations = ["testcases/sql/mysqlgather/mysql_testcase1.xml","testcases/sql/oraclegather/oracle_testcase1.xml","testcases/sql/mysqlgather/mysql_testcase2.xml","testcases/sql/oraclegather/oracle_testcase2.xml","testcases/sql/mysqlgather/mysql_testcase3.xml","testcases/sql/oraclegather/oracle_testcase3.xml","testcases/sql/mysqlgather/mysql_testcase4.xml","testcases/sql/oraclegather/oracle_testcase4.xml","testcases/sql/mysqlgather/mysql_testcase5.xml","testcases/sql/oraclegather/oracle_testcase5.xml","testcases/sql/mysqlgather/mysql_testcase6.xml","testcases/sql/oraclegather/oracle_testcase6.xml","testcases/sql/mysqlgather/mysql_testcase7.xml","testcases/sql/oraclegather/oracle_testcase7.xml","testcases/sql/mysqlgather/mysql_testcase8.xml","testcases/sql/oraclegather/oracle_testcase8.xml"]
+    # operations = ["testcases/permission/grant_auth.xml"]
+    #operations = ["testcases/system-management/user/create_user.xml"]
     for item in operations:
         task_file = item
         try_start_new_job(suite_name, task_file)
-
-    monitor_jobs()
+    monitor_jobs(suite_name)
     end_run(suite_name)

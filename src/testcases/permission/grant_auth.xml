@@ -8,7 +8,7 @@
             <stringProp name="port">3306</stringProp>
             <stringProp name="username">admin</stringProp>
             <stringProp name="password">whdata123</stringProp>
-            <stringProp name="database">str</stringProp>
+            <stringProp name="database">str_test_lwc</stringProp>
             <stringProp name="sql">
                 SELECT
                     db_name, t1.system_user_name,t1.passwd,t1.operation, db_type, t1.object_type, t1.t_user_permission_type as permission_type

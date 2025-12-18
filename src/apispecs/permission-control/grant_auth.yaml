@@ -25,7 +25,7 @@ paths:
                 term:
                   description: 未知
                   type: integer
-                  example: 9
+                  example: 1
                 term_from:
                   description: 未知
                   type: boolean
