@@ -1,10 +1,10 @@
-<TestPlan name="oracle_select_instance_auth">
+<TestPlan name="db2_all_instance_auth">
     <BeforeThreadGroup name="跑铺底数据的语句(创建库)" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
             <stringProp name="u:username">admin</stringProp>
-            <stringProp name="u:instance_key">120autotest-oracle</stringProp>
-            <stringProp name="u:schema_key">SYSTEM</stringProp>
-            <stringProp name="u:dbtype">1</stringProp>
+            <stringProp name="u:instance_key">120autotest-db2</stringProp>
+            <stringProp name="u:schema_key">NULLID</stringProp>
+            <stringProp name="u:dbtype">2</stringProp>
             <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
             <stringProp name="u:except">操作成功</stringProp>
         </VariableDataSet>
@@ -34,9 +34,9 @@
                     REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
                 FROM str_sql_template st
                 JOIN str_user_template ut
-                  ON ut.id in (2)
-                WHERE st.sql_exec_timing = 'before' and st.sql_lang like '%create user%'
-                  AND st.sql_type = 1  and st.is_enable = 1;
+                  ON ut.id in (1)
+                WHERE st.sql_exec_timing = 'before' and st.sql_lang like '%create schema%'
+                  AND st.sql_type = 5 and st.is_enable = 1;
             </stringProp>
             <stringProp name="variableNames">sql</stringProp>
         </DBDataSet>
@@ -117,14 +117,14 @@
                 <cacheProp name="c:env">all</cacheProp>
             </CacheDataSet>
         </HttpSampler>
-        <ResultReportingListener name="oracle_select_instance_auth"/>
+        <ResultReportingListener name="db2_all_instance_auth"/>
     </BeforeThreadGroup>
     <BeforeThreadGroup name="跑铺底数据的语句(非创建库)" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
             <stringProp name="u:username">admin</stringProp>
-            <stringProp name="u:instance_key">120autotest-oracle</stringProp>
-            <stringProp name="u:schema_key">select_instance_auth</stringProp>
-            <stringProp name="u:dbtype">1</stringProp>
+            <stringProp name="u:instance_key">120autotest-db2</stringProp>
+            <stringProp name="u:schema_key">all_instance_auth</stringProp>
+            <stringProp name="u:dbtype">2</stringProp>
             <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
             <stringProp name="u:except">操作成功</stringProp>
         </VariableDataSet>
@@ -154,9 +154,9 @@
                     REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
                 FROM str_sql_template st
                 JOIN str_user_template ut
-                  ON ut.id in (2)
-                WHERE st.sql_exec_timing = 'before' and st.sql_lang NOT like '%create user%'
-                  AND st.sql_type = 1  and st.is_enable = 1;
+                  ON ut.id in (1)
+                WHERE st.sql_exec_timing = 'before' and st.sql_lang NOT like '%create schema%'
+                  AND st.sql_type = 5  and st.is_enable = 1;
             </stringProp>
             <stringProp name="variableNames">sql</stringProp>
         </DBDataSet>
@@ -237,7 +237,7 @@
                 <cacheProp name="c:env">all</cacheProp>
             </CacheDataSet>
         </HttpSampler>
-        <ResultReportingListener name="oracle_select_instance_auth"/>
+        <ResultReportingListener name="db2_all_instance_auth"/>
     </BeforeThreadGroup>
     <ThreadGroup name="真实执行的sql" threads="10" enabled="True" ramp_up="1">
         <VariableDataSet name="用户定义的变量">
@@ -251,7 +251,7 @@
             <stringProp name="password">whdata123</stringProp>
             <stringProp name="database">str_test_lwc</stringProp>
             <stringProp name="sql">
-                SELECT dbname,schemaname,dbtype,username,`sql`,expect from str_test_template where username = 'select_instance_auth' and dbtype = 1;
+                SELECT dbname,schemaname,dbtype,username,`sql`,expect from str_test_template where username = 'all_instance_auth' and dbtype = 5;
             </stringProp>
             <stringProp name="variableNames">instance_key,schema_key,dbtype,exec_username,sql,expect</stringProp>
         </DBDataSet>
@@ -328,9 +328,6 @@
                 <ExpressionProp name="e:task_id">$.data.task_id</ExpressionProp>
             </ExpressionExtractor>
         </HttpSampler>
-<!--        <IfController name="根据变量判断是否定时" condition="len(${sqls}) > 1" is_variable="True" variable_position="ExpressionExtractor">-->
-<!--            <ConstantTimer name="等待获取sql" pause_time="10"/>-->
-<!--        </IfController>-->
         <HttpSampler name="获取结果">
             <CacheDataSet name="cache data set">
                 <cacheProp name="c:interface">task_result</cacheProp>
@@ -369,6 +366,6 @@
 <!--                <AssertProp name="a:message">${expect}</AssertProp>-->
 <!--            </ResponseAssertion>-->
         </HttpSampler>
-        <ResultReportingListener name="oracle_select_instance_auth"/>
+        <ResultReportingListener name="db2_all_instance_auth"/>
     </ThreadGroup>
 </TestPlan>

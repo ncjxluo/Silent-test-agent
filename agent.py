@@ -109,8 +109,50 @@ def end_run(suite_name) -> None:
 
 if __name__ == "__main__":
     suite_name = before_run()
-    operations = ["testcases/sql/mysqlgather/mysql_testcase1.xml","testcases/sql/oraclegather/oracle_testcase1.xml","testcases/sql/mysqlgather/mysql_testcase2.xml","testcases/sql/oraclegather/oracle_testcase2.xml","testcases/sql/mysqlgather/mysql_testcase3.xml","testcases/sql/oraclegather/oracle_testcase3.xml","testcases/sql/mysqlgather/mysql_testcase4.xml","testcases/sql/oraclegather/oracle_testcase4.xml","testcases/sql/mysqlgather/mysql_testcase5.xml","testcases/sql/oraclegather/oracle_testcase5.xml","testcases/sql/mysqlgather/mysql_testcase6.xml","testcases/sql/oraclegather/oracle_testcase6.xml","testcases/sql/mysqlgather/mysql_testcase7.xml","testcases/sql/oraclegather/oracle_testcase7.xml","testcases/sql/mysqlgather/mysql_testcase8.xml","testcases/sql/oraclegather/oracle_testcase8.xml"]
+    # operations = ["testcases/sql/mysqlgather/mysql_testcase1.xml","testcases/sql/oraclegather/oracle_testcase1.xml","testcases/sql/mysqlgather/mysql_testcase2.xml","testcases/sql/oraclegather/oracle_testcase2.xml","testcases/sql/mysqlgather/mysql_testcase3.xml","testcases/sql/oraclegather/oracle_testcase3.xml","testcases/sql/mysqlgather/mysql_testcase4.xml","testcases/sql/oraclegather/oracle_testcase4.xml","testcases/sql/mysqlgather/mysql_testcase5.xml","testcases/sql/oraclegather/oracle_testcase5.xml","testcases/sql/mysqlgather/mysql_testcase6.xml","testcases/sql/oraclegather/oracle_testcase6.xml","testcases/sql/mysqlgather/mysql_testcase7.xml","testcases/sql/oraclegather/oracle_testcase7.xml","testcases/sql/mysqlgather/mysql_testcase8.xml"]
+    operations = ["testcases/sql/mysqlgather/mysql_testcase1.xml",
+                  "testcases/sql/oraclegather/oracle_testcase1.xml",
+                  "testcases/sql/postgresgather/postgre_testcase1.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase1.xml",
+                  "testcases/sql/db2gather/db2_testcase1.xml",
+                  "testcases/sql/mysqlgather/mysql_testcase2.xml",
+                  "testcases/sql/oraclegather/oracle_testcase2.xml",
+                  "testcases/sql/postgresgather/postgre_testcase2.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase2.xml",
+                  "testcases/sql/db2gather/db2_testcase2.xml",
+                  "testcases/sql/mysqlgather/mysql_testcase3.xml",
+                  "testcases/sql/oraclegather/oracle_testcase3.xml",
+                  "testcases/sql/postgresgather/postgre_testcase3.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase3.xml",
+                  "testcases/sql/db2gather/db2_testcase3.xml",
+                  "testcases/sql/mysqlgather/mysql_testcase4.xml",
+                  "testcases/sql/oraclegather/oracle_testcase4.xml",
+                  "testcases/sql/postgresgather/postgre_testcase4.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase4.xml",
+                  "testcases/sql/db2gather/db2_testcase4.xml",
+                  "testcases/sql/mysqlgather/mysql_testcase5.xml",
+                  "testcases/sql/oraclegather/oracle_testcase5.xml",
+                  "testcases/sql/postgresgather/postgre_testcase5.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase5.xml",
+                  "testcases/sql/db2gather/db2_testcase5.xml",
+                  "testcases/sql/mysqlgather/mysql_testcase6.xml",
+                  "testcases/sql/oraclegather/oracle_testcase6.xml",
+                  "testcases/sql/postgresgather/postgre_testcase6.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase6.xml",
+                  "testcases/sql/db2gather/db2_testcase6.xml",
+                  "testcases/sql/mysqlgather/mysql_testcase7.xml",
+                  "testcases/sql/oraclegather/oracle_testcase7.xml",
+                  "testcases/sql/postgresgather/postgre_testcase7.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase7.xml",
+                  "testcases/sql/db2gather/db2_testcase7.xml",
+                  "testcases/sql/mysqlgather/mysql_testcase8.xml",
+                  "testcases/sql/oraclegather/oracle_testcase8.xml",
+                  "testcases/sql/postgresgather/postgre_testcase8.xml",
+                  "testcases/sql/sqlservergather/sqlserver_testcase8.xml",
+                  "testcases/sql/db2gather/db2_testcase8.xml"]
     # operations = ["testcases/permission/grant_auth.xml"]
+    #operations = ["testcases/sql/postgresgather/postgre_testcase1.xml"]
+    #operations = ["testcases/sql/db2gather/db2_testcase1.xml","testcases/sql/sqlservergather/sqlserver_testcase1.xml"]
     #operations = ["testcases/system-management/user/create_user.xml"]
     for item in operations:
         task_file = item

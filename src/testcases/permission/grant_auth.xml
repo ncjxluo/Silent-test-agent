@@ -4,7 +4,7 @@
             <stringProp name="u:username">admin</stringProp>
         </VariableDataSet>
         <DBDataSet name="sqlData">
-            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="ip">192.168.220.200</stringProp>
             <stringProp name="port">3306</stringProp>
             <stringProp name="username">admin</stringProp>
             <stringProp name="password">whdata123</stringProp>

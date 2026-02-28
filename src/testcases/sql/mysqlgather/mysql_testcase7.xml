@@ -24,11 +24,11 @@
              </HeadExtractor>
         </HttpSampler>
         <DBDataSet name="sqlData">
-            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="ip">192.168.220.200</stringProp>
             <stringProp name="port">3306</stringProp>
             <stringProp name="username">admin</stringProp>
             <stringProp name="password">whdata123</stringProp>
-            <stringProp name="database">str</stringProp>
+            <stringProp name="database">str_test_lwc</stringProp>
             <stringProp name="sql">
                 SELECT
                     REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
@@ -36,7 +36,7 @@
                 JOIN str_user_template ut
                   ON ut.id in (7)
                 WHERE st.sql_exec_timing = 'before' and st.sql_lang like '%create database%'
-                  AND st.sql_type = 2;
+                  AND st.sql_type = 2  and st.is_enable = 1;
             </stringProp>
             <stringProp name="variableNames">sql</stringProp>
         </DBDataSet>
@@ -144,11 +144,11 @@
              </HeadExtractor>
         </HttpSampler>
         <DBDataSet name="sqlData">
-            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="ip">192.168.220.200</stringProp>
             <stringProp name="port">3306</stringProp>
             <stringProp name="username">admin</stringProp>
             <stringProp name="password">whdata123</stringProp>
-            <stringProp name="database">str</stringProp>
+            <stringProp name="database">str_test_lwc</stringProp>
             <stringProp name="sql">
                 SELECT
                     REPLACE(st.sql_lang, 'ncjx_str_schema_name', ut.t_user_name) AS sql_lang
@@ -156,7 +156,7 @@
                 JOIN str_user_template ut
                   ON ut.id in (7)
                 WHERE st.sql_exec_timing = 'before' and st.sql_lang NOT like '%create database%'
-                  AND st.sql_type = 2;
+                  AND st.sql_type = 2  and st.is_enable = 1;
             </stringProp>
             <stringProp name="variableNames">sql</stringProp>
         </DBDataSet>
@@ -245,11 +245,11 @@
              <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
         </VariableDataSet>
         <DBDataSet name="sqlData">
-            <stringProp name="ip">192.168.3.220</stringProp>
+            <stringProp name="ip">192.168.220.200</stringProp>
             <stringProp name="port">3306</stringProp>
             <stringProp name="username">admin</stringProp>
             <stringProp name="password">whdata123</stringProp>
-            <stringProp name="database">str</stringProp>
+            <stringProp name="database">str_test_lwc</stringProp>
             <stringProp name="sql">
                 SELECT dbname,schemaname,dbtype,username,`sql`,expect from str_test_template where username = 'exec_instance_auth' and dbtype = 2;
             </stringProp>

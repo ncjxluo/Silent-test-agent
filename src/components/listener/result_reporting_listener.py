@@ -58,8 +58,8 @@ class ResultReportingListener(Listener):
                         assert_time_sign = "该接口没有添加断言控制器"
                     else:
                         assert_res_sign = local_ctx.get(key).get("assert_data").get("res_sign")
-                        assert_res_details = json.dumps(local_ctx.get(key).get("assert_data").get("res_details"))
-                        assert_ver_sign = json.dumps(local_ctx.get(key).get("assert_data").get("ver_sign"))
+                        assert_res_details = json.dumps(local_ctx.get(key).get("assert_data").get("res_details"),ensure_ascii=False)
+                        assert_ver_sign = json.dumps(local_ctx.get(key).get("assert_data").get("ver_sign"),ensure_ascii=False)
                         assert_time_sign = local_ctx.get(key).get("assert_data").get("time_sign")
                     if assert_res_sign == '整体断言:失败':
                         case_status = 1
@@ -67,9 +67,9 @@ class ResultReportingListener(Listener):
                         case_key = case_id,
                         step_id = step_id,
                         step_name = key,
-                        user_variables = json.dumps(local_ctx.get("user_variable")),
+                        user_variables = json.dumps(local_ctx.get("user_variable"),ensure_ascii=False),
                         request_url = local_ctx.get(key).get("req").get("url"),
-                        request_param = json.dumps(local_ctx.get(key).get("req").get("params")),
+                        request_param = json.dumps(local_ctx.get(key).get("req").get("params"),ensure_ascii=False),
                         real_response = local_ctx.get(key).get("last_response"),
                         response_time=local_ctx.get(key).get("last_response_time"),
                         assert_res_sign=assert_res_sign,
