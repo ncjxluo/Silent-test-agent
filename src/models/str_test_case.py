@@ -21,5 +21,5 @@ class StrTestCase(SQLModel, table=True):
     case_key: str = Field(max_length=100, index=True, description="测试步骤的的key")
     case_status: Optional[int] = Field(default=None, description="这个case成功或失败的标志，0为成功，1为失败")
     remarks: Optional[str] = Field(max_length=100, description="执行的备注")
-    created_at: datetime = Field(default_factory=lambda: datetime.now())
-    updated_at: Optional[datetime] = Field(default_factory=lambda: datetime.now())
+    created_at: int = Field(default_factory=lambda: int(datetime.now().timestamp() * 1000))
+    updated_at: int = Field(default_factory=lambda: int(datetime.now().timestamp() * 1000))

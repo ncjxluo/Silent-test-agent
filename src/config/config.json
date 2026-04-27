@@ -6,12 +6,23 @@
       "scheme_port": 7080,
       "tcp_port": 22015
     },
+    "backend": {
+      "scheme": "http",
+      "host": "localhost",
+      "port": 8000
+    },
     "db": {
-      "host": "192.168.3.220",
+      "host": "192.168.220.200",
       "port": 3306,
       "user": "admin",
       "password": "whdata123",
       "schema": "str_test_lwc"
+    },
+    "es": {
+      "host": "192.168.220.200",
+      "port": 9200,
+      "user": "elastic",
+      "password": "whdata123"
     },
     "process": {
       "max-process": 3

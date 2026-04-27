@@ -11,6 +11,7 @@ from src.components.threads.thread_group import ThreadGroup
 from src.components.threads.before_thread_group import BeforeThreadGroup
 from src.components.threads.end_thread_group import EndThreadGroup
 from src.components.assertions.response_assertion import ResponseAssertion
+from src.components.assertions.deepdiff_response_assertion import DeepDiffResponseAssertion
 from src.components.config_element.csv_data_set import CSVDataSet
 from src.components.sampler.http_sampler import HttpSampler
 from src.components.sampler.python_shell_sampler import PythonShellSampler
@@ -37,6 +38,7 @@ class StrParser:
         "CSVDataSet": CSVDataSet,
         "HttpSampler": HttpSampler,
         "ResponseAssertion": ResponseAssertion,
+        "DeepDiffResponseAssertion": DeepDiffResponseAssertion,
         "CacheDataSet": CacheDataSet,
         "VariableDataSet": VariableDataSet,
         "ResultReportingListener": ResultReportingListener,
@@ -53,10 +55,16 @@ class StrParser:
     }
 
     @str_log_decorate
-    def parse(self, xml_file):
-        tree = ET.parse(xml_file)
-        root = tree.getroot()
+    def parse(self, xml_str):
+        # tree = ET.parse(xml_file)
+        # root = tree.getroot()
+        root = ET.fromstring(xml_str)
         return self._parse_node(root)
+    # def parse(self, xml_file):
+    #     tree = ET.parse(xml_file)
+    #     # tree = ET.fromstring(xml_file)
+    #     root = tree.getroot()
+    #     return self._parse_node(root)
 
 
     def _parse_node(self, elem):

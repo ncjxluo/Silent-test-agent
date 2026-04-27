@@ -4,7 +4,7 @@
             <stringProp name="u:username">admin</stringProp>
             <stringProp name="u:instance_key">120autotest-db2</stringProp>
             <stringProp name="u:schema_key">NULLID</stringProp>
-            <stringProp name="u:dbtype">2</stringProp>
+            <stringProp name="u:dbtype">5</stringProp>
             <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
             <stringProp name="u:except">操作成功</stringProp>
         </VariableDataSet>
@@ -124,7 +124,7 @@
             <stringProp name="u:username">admin</stringProp>
             <stringProp name="u:instance_key">120autotest-db2</stringProp>
             <stringProp name="u:schema_key">manager_instance_auth</stringProp>
-            <stringProp name="u:dbtype">2</stringProp>
+            <stringProp name="u:dbtype">5</stringProp>
             <stringProp name="u:prefs">"2,3,5,6,7"</stringProp>
             <stringProp name="u:except">操作成功</stringProp>
         </VariableDataSet>

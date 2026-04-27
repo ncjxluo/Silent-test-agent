@@ -23,6 +23,7 @@ import re
 from datetime import datetime
 from src.utils.str_client import get_client
 from src.storage.global_context import interface
+import src.storage.global_context as global_context
 
 
 class HttpSampler(Sampler):
@@ -45,19 +46,19 @@ class HttpSampler(Sampler):
 
     async def before_run(self):
         for child in self.children:
-
             if isinstance(child, Assertion):
                 self.assertions.append(child)
-            elif isinstance(child, ConfigElement):
-                self.config_element.append(child)
+            # 这里存在一个严重的bug：强绑定关系
+            # elif isinstance(child, ConfigElement):
+            #     self.config_element.append(child)
             elif isinstance(child, PreProcessors):
                 self.pre_processors.append(child)
             elif isinstance(child, PostProcessors):
                 self.post_processors.append(child)
 
-        if self.config_element:
-            for child in self.config_element:
-                await child.execute()
+        # if self.config_element:
+        #     for child in self.config_element:
+        #         await child.execute()
 
         if self.pre_processors:
             for child in self.pre_processors:
@@ -66,13 +67,31 @@ class HttpSampler(Sampler):
 
     async def run(self):
         local_ctx = ctx.get()
-        sampler_dic = {}
-        for key,value in self.__dict__.items():
+        for key, value in self.__dict__.items():
             if "h:" in key:
+                # print(f"取样器获取的变量:{key}的值为:{value}")
                 key_value = key.split(":")
-                sampler_dic[key_value[1]] = value
+                # print(f"取样器获取的变量:{key_value}的值为:{value}")
+                if key_value[1] == "interface":
+                    local_ctx[key_value[1]] = global_context.global_storage.get(key_value[1]).get(value)
+                elif key_value[1] == "all":
+                    local_ctx[key_value[1]] = global_context.global_storage.get(key_value[1]).get(key_value[1])
+                else:
+                    local_ctx[key_value[1]] = value
+                # if value != "all":
+                #     print("我进来了1")
+                #     local_ctx[key_value[1]] = global_context.global_storage.get(key_value[1]).get(value)
+                # else:
+                #     local_ctx[key_value[1]] = global_context.global_storage.get(key_value[1]).get(key_value[1])
+        # 这里应该也不对，变量应该通过Prop包裹读取,header请求头应该有header_manager来完成
+        # sampler_dic = {}
+        # for key,value in self.__dict__.items():
+        #     if "h:" in key:
+        #         key_value = key.split(":")
+        #         sampler_dic[key_value[1]] = value
         # self.print_thread_info("[取样器]",f"当前上下文缓存中的数据:{local_ctx}")
-        req_data,res_data,header_data = self.assemble_data(local_ctx, sampler_dic)
+        # req_data,res_data,header_data = self.assemble_data(local_ctx, sampler_dic)
+        req_data, res_data, header_data = self.assemble_data(local_ctx)
         await self.send_request(local_ctx, req_data, res_data,header_data)
 
 
@@ -86,23 +105,26 @@ class HttpSampler(Sampler):
                 await child.execute()
 
 
-    def assemble_data(self, local_ctx, sampler_dic) -> Tuple[dict, dict, dict]:
+    # def assemble_data(self, local_ctx, sampler_dic) -> Tuple[dict, dict, dict]:
+    def assemble_data(self, local_ctx) -> Tuple[dict, dict, dict]:
         """
         组装请求的参数
         :param local_ctx: 上下文对象
-        :param sampler_dic: 取样器内部的变量
         :return:
         """
         req_data = dict()
         res_data = dict()
         header_data = dict()
+        # print(f"http取样器的上下文数据:{local_ctx}")
         # 获取接口的operationId
         req_data["operationId"] = local_ctx.get("interface").get("operationId")
         # 获取接口的请求方法
         req_data["method"] = local_ctx.get("interface").get("requestmethod")
         # 获取接口的url
-        req_data["url"] = self.substitute(local_ctx.get("interface").get("servers")[0].get("url")
-                         + local_ctx.get("interface").get("requestpath"), local_ctx.get("env"))
+
+        # req_data["url"] = self.substitute(local_ctx.get("interface").get("servers")[0].get("url")
+        #                  + local_ctx.get("interface").get("requestpath"), local_ctx.get("env"))
+        req_data["url"] = local_ctx.get("env") + local_ctx.get("interface").get("requestpath")
         # 获取接口的描述
         req_data["desc"] = local_ctx.get("interface").get("description")
         # 获取接口的参数
@@ -121,9 +143,9 @@ class HttpSampler(Sampler):
 
         # print(f'替换前{req_data["params"]}')
 
-        if sampler_dic:
-            # self.print_thread_info("[取样器]","根据规则，优先替换取样器内部的环境变量")
-            req_data["params"] = self.substitute(req_data["params"], sampler_dic)
+        # if sampler_dic:
+        #     # self.print_thread_info("[取样器]","根据规则，优先替换取样器内部的环境变量")
+        #     req_data["params"] = self.substitute(req_data["params"], sampler_dic)
 
         # print(f'接口请求参数{req_data["params"]}')
         if "user_variable" in local_ctx:
@@ -131,9 +153,10 @@ class HttpSampler(Sampler):
 
         res_data["response"] = self.deep_get_dict(local_ctx.get("interface").get("responses"), "*.content.*.schema.items.properties.data.properties")
         res_data["expectation"] = dict()
-        for key, value in local_ctx.get("user_variable").items():
-            if "expect" in key:
-                res_data["expectation"][key] = value
+        if "user_variable" in local_ctx:
+            for key, value in local_ctx.get("user_variable").items():
+                if "expect" in key:
+                    res_data["expectation"][key] = value
         if local_ctx.get("user_headers"):
             pattern = r"\$\{.*?\}"
             for key, value in local_ctx.get("user_headers").items():

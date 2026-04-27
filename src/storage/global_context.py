@@ -12,6 +12,6 @@ global_storage = {
     "env": env,
     "interface": interface,
     "instance": instance,
-    "suite_name": "",
-    "plan_name": ""
+    "task_key": "",
+    "plan_key": ""
 }

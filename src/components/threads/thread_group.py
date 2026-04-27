@@ -44,7 +44,11 @@ class ThreadGroup(Thread):
             semaphore = asyncio.Semaphore(self.threads)
             if max_threads == 1:
                 for x in range(count):
-                    await self.run()
+                    # await self.run()
+                    try:
+                        await self.run()
+                    except Exception as e:
+                        Log().get_logger().exception(f"任务 {x} 执行失败", exc_info=True)
                     await asyncio.sleep(sleep_time)
             else:
                 for x in range(count):
@@ -54,10 +58,30 @@ class ThreadGroup(Thread):
                 if tasks:
                     # 捕获所有协程异常
                     results = await asyncio.gather(*tasks, return_exceptions=True)
-                    for res in results:
+                    for i, res in enumerate(results):
                         if isinstance(res, Exception):
-                            Log().get_logger().exception("excute 出错了")
-                            Log().get_logger().exception(res)
+                            print(f"\n{'=' * 60}")
+                            print(f"任务 {i} 执行失败:")
+                            print(f"{'=' * 60}")
+                            import traceback
+                            traceback.print_exception(type(res), res, res.__traceback__)
+                            print(f"{'=' * 60}\n")
+                            # 方式1：直接使用 exception 并传入 exc_info
+                            # Log().get_logger().exception(
+                            #     f"任务 {i} 执行失败",
+                            #     exc_info=res  # 关键：传入异常对象
+                            # )
+                            #
+                            # # 或者方式2：打印完整堆栈
+                            # import traceback
+                            # tb_str = ''.join(traceback.format_exception(
+                            #     type(res), res, res.__traceback__
+                            # ))
+                            # Log().get_logger().error(f"任务 {i} 失败:\n{tb_str}")
+                    # for res in results:
+                    #     if isinstance(res, Exception):
+                    #         Log().get_logger().exception("excute 出错了")
+                    #         Log().get_logger().exception(res)
                 # await asyncio.gather(*tasks)
         else:
             print(f"[ThreadGroup] enabled: {self.name}")

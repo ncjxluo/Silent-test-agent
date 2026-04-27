@@ -17,9 +17,12 @@ class StrTestSuite(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     user_key: str = Field( max_length=100, description="执行这个任务的用户id")
     suite_key: str = Field(max_length=100, index=True, default_factory=lambda: str(uuid.uuid4()),description="测试任务的key")
-    suite_name: str = Field(max_length=100, description="测试任务的名字.如哪个agent")
+    suite_name: str = Field(max_length=100, description="测试任务的名字")
+    suite_agent_key: str = Field(max_length=100, description="下发给agent")
     status: str = Field(max_length=20, description="测试任务的状态")
     type: str = Field(max_length=20, description="测试任务的类别")
-    created_at: datetime = Field(default_factory=lambda: datetime.now())
-    updated_at: Optional[datetime] = Field(default_factory=lambda: datetime.now())
+    created_at: int = Field(default_factory=lambda: int(datetime.now().timestamp() * 1000))
+    updated_at: int = Field(default_factory=lambda: int(datetime.now().timestamp() * 1000), sa_column_kwargs={
+        "onupdate": lambda: int(datetime.now().timestamp() * 1000)
+    })
 

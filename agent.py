@@ -1,161 +1,206 @@
 # -*- coding: utf-8 -*-
-# @Time    : 2025/11/21 14:22
+# @Time    : 2026/4/4 22:15
 # @Author  : lwc
-# @File    : main.py
-# @Description : 接口agent的入口
+# @File    : agent.py
+# @Description : 常驻服务（已修复任务重复执行问题）
 
-import subprocess
-import time
 from collections import deque
-from src.models.str_test_suite import StrTestSuite
-from src.utils.str_helper import get_local_ip
-from sqlmodel import SQLModel, select, and_, desc, create_engine, Session
+from src.utils.str_helper import get_local_ip, get_local_cpu, get_local_memory, get_local_io
+import time
+import threading
+import httpx
+import subprocess
+import json
 from src.utils.str_config import StrConfig
-from datetime import datetime
+
+# ====================== 配置 ======================
+str_config = StrConfig()
+PLATFORM_API = f'http://{str_config.get_config().get("backend").get("host")}:{str_config.get_config().get("backend").get("port")}/api/v1'
+
+FETCH_TASK_INTERVAL = 60
+HEARTBEAT_INTERVAL = 10
+
+AGENT_NAME = get_local_ip()
+AGENT_ID = f"ncjx-{AGENT_NAME}"
 
 MAX_JOBS = 5
 
-running_jobs = []       # 运行任务的列表
-task_queue = deque()       # 等待执行的任务队列
+# ====================== 全局状态 ======================
+running_jobs = []        # [(process, task_id)]
+task_queue = deque()
+task_seen = set()        # 已接收任务（防重复）
 
-str_config = StrConfig()
+running = True
+lock = threading.Lock()  # 线程加锁避免多线程抢夺导致的重复
 
-IP = str_config.get_config().get("db").get("host")
-PORT = str_config.get_config().get("db").get("port")
-UNAME = str_config.get_config().get("db").get("user")
-PASSWD = str_config.get_config().get("db").get("password")
-SCHEMA = str_config.get_config().get("db").get("schema")
+# ====================== 工具函数 ======================
 
-DATABASE_URL = f"mysql+pymysql://{UNAME}:{PASSWD}@{IP}:{PORT}/{SCHEMA}"
-
-engine = create_engine(DATABASE_URL)
-
-
-def try_start_new_job(suite_name, task_file):
-    global running_jobs
-
-    # 清除已结束的子进程
-    running_jobs = [p for p in running_jobs if p.poll() is None]
-
-    # 如果有空闲槽位，立刻启动任务
-    if len(running_jobs) < MAX_JOBS:
-        print(f"启动任务: {task_file}")
-        p = subprocess.Popen(["python3", "interfaceMain.py","--name",suite_name, "--task", task_file])
-        running_jobs.append(p)
-    else:
-        # 没槽位，加入队列
-        print(f"队列等待: {task_file}")
-        task_queue.append(task_file)
+def get_task_id(task: dict):
+    """统一任务唯一标识"""
+    return task.get('suite_key') or task.get('plan_key')
 
 
-def monitor_jobs(suite_name):
-    """循环监控：有空位就从队列中取任务执行"""
-    while running_jobs or task_queue:
-        # 清理已结束的进程
-        alive_jobs = []
-        for p in running_jobs:
-            if p.poll() is None:
-                alive_jobs.append(p)
+# ====================== 心跳 ======================
+
+def heartbeat_thread():
+    while running:
+        try:
+            with lock:
+                running_task_ids = [task_id for _, task_id in running_jobs]
+
+            print(f"[心跳] {AGENT_ID} 在线 | 运行中: {len(running_task_ids)}")
+
+            httpx.post(
+                f"{PLATFORM_API}/agent/agent_heart_beat",
+                json={
+                    "agent_key": AGENT_ID,
+                    "agent_name": AGENT_NAME,
+                    "status": 1,
+                    "agent_running_tasks": json.dumps(running_task_ids, ensure_ascii=False),
+                    "agent_max_tasks": str(MAX_JOBS),
+                    "agent_cpu": get_local_cpu(),
+                    "agent_memory": get_local_memory(),
+                    "agent_io": get_local_io()
+                }
+            )
+        except Exception as e:
+            print(f"[心跳] 异常: {e}")
+
+        time.sleep(HEARTBEAT_INTERVAL)
+
+
+# ====================== 拉任务 ======================
+
+def fetch_task_thread():
+    while running:
+        try:
+            print("[查任务] 拉取平台任务...")
+
+            res = httpx.get(f"{PLATFORM_API}/agent/get_task?agent_id={AGENT_ID}")
+            print(f"[查任务] 平台返回: {res.status_code}")
+
+            data = res.json()
+            print(f"[查任务] 平台返回任务: {data}")
+            tasks = data.get('data') or []
+
+            if data.get('status') and tasks:
+                for task in tasks:
+                    task_id = get_task_id(task)
+                    if not task_id:
+                        continue
+                    with lock:
+                        if task_id in task_seen:
+                            print(f"[跳过重复任务] {task_id}")
+                            continue
+
+                        print(f"[接收任务] {task_id}")
+                        task_seen.add(task_id)
+
+                    try_start_new_job(task)
             else:
-                print(f"任务完成 PID: {p.pid}")
+                print("[查任务] 无任务")
+
+        except Exception as e:
+            print(f"[查任务] 异常: {e}")
+
+        time.sleep(FETCH_TASK_INTERVAL)
+
+
+# ====================== 启动任务 ======================
+
+def try_start_new_job(task: dict):
+    task_id = get_task_id(task)
+    if not task_id:
+        return
+
+    with lock:
+        # 清理已结束任务
+        alive_jobs = []
+        for p, tid in running_jobs:
+            if p.poll() is None:
+                alive_jobs.append((p, tid))
+            else:
+                print(f"[任务完成] PID={p.pid}, task_id={tid}")
+                task_seen.discard(tid)
+
         running_jobs[:] = alive_jobs
 
-        # 尝试从队列启动新的任务
-        while task_queue and len(running_jobs) < MAX_JOBS:
-            task_file = task_queue.popleft()
-            try_start_new_job(suite_name, task_file)
+        if len(running_jobs) < MAX_JOBS:
+            print(f"[启动任务] {task.get('plan_name')} | {task_id}")
 
-        time.sleep(5)  # 避免空转 CPU
+            try:
+                # print()
+                p = subprocess.Popen([
+                    "python3", "interfaceMain.py",
+                    "--task_key", str(task.get('suite_key', '')),
+                    "--plan_key", str(task.get('plan_key', '')),
+                    "--case_content", str(task.get('case_content', '')),
+                    "--doc_content", str(task.get('doc_content', '')),
+                ])
+
+                running_jobs.append((p, task_id))
+
+            except Exception as e:
+                print(f"[启动失败] {task_id} -> {e}")
+                task_seen.discard(task_id)
+        else:
+            print(f"[加入队列] {task_id}")
+            task_queue.append(task)
 
 
-def before_run():
-    suite_name = f'agent{get_local_ip()}'
-    with Session(engine) as session:
-        suite = StrTestSuite(
-            user_key="a",
-            suite_name=suite_name,
-            status="running",
-            type="api"
-        )
-        session.add(suite)
-        session.commit()
-    return suite_name
+# ====================== 队列调度 ======================
+
+def monitor_queue():
+    while running:
+        try:
+            with lock:
+                # 清理已结束任务
+                alive_jobs = []
+                for p, tid in running_jobs:
+                    if p.poll() is None:
+                        alive_jobs.append((p, tid))
+                    else:
+                        print(f"[任务完成] PID={p.pid}, task_id={tid}")
+                        task_seen.discard(tid)
+
+                running_jobs[:] = alive_jobs
+
+                # 启动队列任务
+                while task_queue and len(running_jobs) < MAX_JOBS:
+                    task = task_queue.popleft()
+                    print(f"[队列调度] 启动 {get_task_id(task)}")
+
+                    # ⚠️ 这里不要再加 task_seen（已经加过了）
+                    try_start_new_job(task)
+
+                print(f"[状态] 运行中: {len(running_jobs)} | 队列: {len(task_queue)} | 已接收: {len(task_seen)}")
+
+        except Exception as e:
+            print(f"[监控异常] {e}")
+
+        time.sleep(2)
 
 
-def end_run(suite_name) -> None:
-    """
-    测试框架运行完成后需要执行的动作
-    :return:
-    """
-    with Session(engine) as session:
-        query = select(StrTestSuite).where(
-                and_(
-                    StrTestSuite.user_key == 'a',
-                    StrTestSuite.suite_name == suite_name,
-                    StrTestSuite.status == "running",
-                    StrTestSuite.type == "api",
-                )
-            ).order_by(desc(StrTestSuite.created_at)).limit(1)
-
-        suite = session.exec(query).first()
-        # suite = result.first()
-        # print(suite)
-        if suite:
-            suite.status = 'finish'
-            suite.updated_at = datetime.now()
-            session.add(suite)
-            session.commit()
-
+# ====================== 主入口 ======================
 
 if __name__ == "__main__":
-    suite_name = before_run()
-    # operations = ["testcases/sql/mysqlgather/mysql_testcase1.xml","testcases/sql/oraclegather/oracle_testcase1.xml","testcases/sql/mysqlgather/mysql_testcase2.xml","testcases/sql/oraclegather/oracle_testcase2.xml","testcases/sql/mysqlgather/mysql_testcase3.xml","testcases/sql/oraclegather/oracle_testcase3.xml","testcases/sql/mysqlgather/mysql_testcase4.xml","testcases/sql/oraclegather/oracle_testcase4.xml","testcases/sql/mysqlgather/mysql_testcase5.xml","testcases/sql/oraclegather/oracle_testcase5.xml","testcases/sql/mysqlgather/mysql_testcase6.xml","testcases/sql/oraclegather/oracle_testcase6.xml","testcases/sql/mysqlgather/mysql_testcase7.xml","testcases/sql/oraclegather/oracle_testcase7.xml","testcases/sql/mysqlgather/mysql_testcase8.xml"]
-    operations = ["testcases/sql/mysqlgather/mysql_testcase1.xml",
-                  "testcases/sql/oraclegather/oracle_testcase1.xml",
-                  "testcases/sql/postgresgather/postgre_testcase1.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase1.xml",
-                  "testcases/sql/db2gather/db2_testcase1.xml",
-                  "testcases/sql/mysqlgather/mysql_testcase2.xml",
-                  "testcases/sql/oraclegather/oracle_testcase2.xml",
-                  "testcases/sql/postgresgather/postgre_testcase2.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase2.xml",
-                  "testcases/sql/db2gather/db2_testcase2.xml",
-                  "testcases/sql/mysqlgather/mysql_testcase3.xml",
-                  "testcases/sql/oraclegather/oracle_testcase3.xml",
-                  "testcases/sql/postgresgather/postgre_testcase3.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase3.xml",
-                  "testcases/sql/db2gather/db2_testcase3.xml",
-                  "testcases/sql/mysqlgather/mysql_testcase4.xml",
-                  "testcases/sql/oraclegather/oracle_testcase4.xml",
-                  "testcases/sql/postgresgather/postgre_testcase4.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase4.xml",
-                  "testcases/sql/db2gather/db2_testcase4.xml",
-                  "testcases/sql/mysqlgather/mysql_testcase5.xml",
-                  "testcases/sql/oraclegather/oracle_testcase5.xml",
-                  "testcases/sql/postgresgather/postgre_testcase5.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase5.xml",
-                  "testcases/sql/db2gather/db2_testcase5.xml",
-                  "testcases/sql/mysqlgather/mysql_testcase6.xml",
-                  "testcases/sql/oraclegather/oracle_testcase6.xml",
-                  "testcases/sql/postgresgather/postgre_testcase6.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase6.xml",
-                  "testcases/sql/db2gather/db2_testcase6.xml",
-                  "testcases/sql/mysqlgather/mysql_testcase7.xml",
-                  "testcases/sql/oraclegather/oracle_testcase7.xml",
-                  "testcases/sql/postgresgather/postgre_testcase7.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase7.xml",
-                  "testcases/sql/db2gather/db2_testcase7.xml",
-                  "testcases/sql/mysqlgather/mysql_testcase8.xml",
-                  "testcases/sql/oraclegather/oracle_testcase8.xml",
-                  "testcases/sql/postgresgather/postgre_testcase8.xml",
-                  "testcases/sql/sqlservergather/sqlserver_testcase8.xml",
-                  "testcases/sql/db2gather/db2_testcase8.xml"]
-    # operations = ["testcases/permission/grant_auth.xml"]
-    #operations = ["testcases/sql/postgresgather/postgre_testcase1.xml"]
-    #operations = ["testcases/sql/db2gather/db2_testcase1.xml","testcases/sql/sqlservergather/sqlserver_testcase1.xml"]
-    #operations = ["testcases/system-management/user/create_user.xml"]
-    for item in operations:
-        task_file = item
-        try_start_new_job(suite_name, task_file)
-    monitor_jobs(suite_name)
-    end_run(suite_name)
+    print("=" * 60)
+    print("          Agent 启动")
+    print("=" * 60)
+
+    thread_list = [
+        threading.Thread(target=heartbeat_thread, daemon=True),
+        threading.Thread(target=fetch_task_thread, daemon=True),
+        threading.Thread(target=monitor_queue, daemon=True),
+    ]
+
+    for t in thread_list:
+        t.start()
+    try:
+        for t in thread_list:
+            t.join()
+    except KeyboardInterrupt:
+        print("\n收到 Ctrl+C，正在关闭...")
+    finally:
+        running = False
+        print("Agent 已安全退出")

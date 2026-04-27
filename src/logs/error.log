@@ -1,0 +1,39 @@
+2026-04-16 18:00:51.477 | ERROR    | src.utils.str_log_decorate:async_wrapper:42 - before_run 异常
+2026-04-16 18:00:51.478 | ERROR    | src.utils.str_log_decorate:async_wrapper:43 - Traceback (most recent call last):
+  File "/Users/lwc/codeproject/python/SlientTR-sync/src/utils/str_log_decorate.py", line 38, in async_wrapper
+    result = await func(*args, **kwargs)
+  File "/Users/lwc/codeproject/python/SlientTR-sync/interfaceMain.py", line 39, in before_run
+    api_parser.parser_api(json.loads(doc_content))
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 5 (char 4)
+
+2026-04-16 18:05:30.497 | ERROR    | src.utils.str_log_decorate:async_wrapper:42 - before_run 异常
+2026-04-16 18:07:09.306 | ERROR    | src.utils.str_log_decorate:async_wrapper:42 - before_run 异常
+2026-04-16 18:07:09.307 | ERROR    | src.utils.str_log_decorate:async_wrapper:43 - Traceback (most recent call last):
+  File "/Users/lwc/codeproject/python/SlientTR-sync/src/utils/str_log_decorate.py", line 38, in async_wrapper
+    result = await func(*args, **kwargs)
+  File "/Users/lwc/codeproject/python/SlientTR-sync/interfaceMain.py", line 39, in before_run
+    api_parser.parser_api(json.loads(doc_content))
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/json/__init__.py", line 339, in loads
+    raise TypeError(f'the JSON object must be str, bytes or bytearray, '
+TypeError: the JSON object must be str, bytes or bytearray, not list
+
+2026-04-16 18:07:44.342 | ERROR    | src.utils.str_log_decorate:async_wrapper:42 - before_run 异常
+2026-04-16 18:07:44.343 | ERROR    | src.utils.str_log_decorate:async_wrapper:43 - Traceback (most recent call last):
+  File "/Users/lwc/codeproject/python/SlientTR-sync/src/utils/str_log_decorate.py", line 38, in async_wrapper
+    result = await func(*args, **kwargs)
+  File "/Users/lwc/codeproject/python/SlientTR-sync/interfaceMain.py", line 39, in before_run
+    api_parser.parser_api(json.loads(doc_content))
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+  File "/Library/Frameworks/Python.framework/Versions/3.9/lib/python3.9/json/decoder.py", line 353, in raw_decode
+    obj, end = self.scan_once(s, idx)
+json.decoder.JSONDecodeError: Expecting ',' delimiter: line 1 column 5 (char 4)
+

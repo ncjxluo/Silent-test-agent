@@ -14,143 +14,71 @@ from src.components.paser.str_parser import StrParser
 from src.utils.str_db import async_session
 from src.utils.str_log_decorate import str_log_decorate
 from src.utils.str_get_path import get_realpath
-from sqlmodel import select, and_, desc, func
+from sqlmodel import select, and_, desc, func, update
 from src.models.str_test_suite import StrTestSuite
 import concurrent.futures
 import os
+import json
 import argparse
+from src.utils.str_es import es
 
 
 @str_log_decorate
-async def before_run(name) -> None:
+async def before_run(task_key, plan_key, doc_content) -> None:
     """
     测试框架启动前需要执行的动作
     :return:
     """
     # 初始化数据库
     # start_time = time.time()
-    print(name)
-    global_context.global_storage["suite_name"] = name
-
-
+    global_context.global_storage["task_key"] = task_key
+    global_context.global_storage["plan_key"] = plan_key
     str_config = StrConfig()
     global_context.global_storage.get("env")["env"] = str_config.get_config().get("env")
     api_parser = ApiParser()
-    api_parser.parser_api()
-    # operations = ["testcases/permission/grant_auth.xml"]
-    # parser = StrParser()
-    # # for item in operations:
-    # #     path = get_realpath(item)
-    # #     testplan = parser.parse(path)
-    # #     await testplan.execute()
-    # end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-    # print("测试前置钩子结束：" + end_time)
-    # print('程序耗时{:.2f}'.format(time.time() - start_time))
+    api_parser.parser_api(json.loads(doc_content))
+    # print(f"存储{global_context.global_storage}")
+    # async with async_session() as session:
+    #     u_sql = update(StrTestSuite).where(
+    #         StrTestSuite.suite_key == task_key
+    #     ).values(status="running")
+    #     await session.execute(u_sql)
+    #     await session.commit()
 
 
 @str_log_decorate
-async def run(task):
+async def run(case_content):
     start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     print("开始执行测试计划：" + start_time)
     start_time = time.time()
-    # operations = ["testcases/sql/mysql_testcase.xml"]
-    # operations = task
-    parser = StrParser()
-    path = get_realpath(task)
-    testplan = parser.parse(path)
+    xml_parser = StrParser()
+    testplan = xml_parser.parse(case_content)
     await testplan.execute()
     end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     print("测试计划结束：" + end_time)
     print('程序耗时{:.2f}'.format(time.time() - start_time))
 
-# async def run() -> None:
-#     start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-#     print("开始执行测试计划：" + start_time)
-#     start_time = time.time()
-#     # operations = ["testcases/sql/mysql_testcase.xml"]
-#     operations = [
-#         "testcases/sql/mysqlgather/mysql_testcase1.xml",
-#         "testcases/sql/mysqlgather/mysql_testcase2.xml"
-#     ]
-#     # operations = [
-#     #     "testcases/sql/mysqlgather/mysql_testcase1.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase2.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase3.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase4.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase5.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase6.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase7.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase8.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase9.xml",
-#     #     "testcases/sql/mysqlgather/mysql_testcase10.xml"
-#     # ]
-#     tasks = [(op, i) for i, op in enumerate(operations)]
-#     with concurrent.futures.ProcessPoolExecutor(max_workers=5) as executor:
-#         results = list(executor.map(process_worker, tasks))
-#         print("\n=== 执行结果 ===")
-#         for result in results:
-#             print(result)
-#     # process_list = []
-#     # for i in range(len(operations)):
-#     #     process_list.append(multiprocessing.Process(target=process_worker, args=(operations[i],i)))
-#     # for p in process_list:
-#     #     p.start()
-#     # for p in process_list:
-#     #     p.join()
-#     end_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-#     print("测试计划结束：" + end_time)
-#     print('程序耗时{:.2f}'.format(time.time() - start_time))
+
+async def end_run() -> None:
+    await es.close()
 
 
-# def process_worker(args):
-#     start_time = time.time()
-#     test_task, index = args
-#     print(f"[{time.time() - start_time:.3f}s] 进程{index}启动 PID:{os.getpid()}")
-#     str_config = StrConfig()
-#     global_context.global_storage.get("env")["env"] = str_config.get_config().get("env")
-#     api_parser = ApiParser()
-#     api_parser.parser_api()
-#     parser = StrParser()
-#     path = get_realpath(test_task)
-#     testplan = parser.parse(path)
-#     asyncio.run(testplan.execute())
-
-
-# async def end_run(name) -> None:
-#     """
-#     测试框架运行完成后需要执行的动作
-#     :return:
-#     """
-#     async with async_session() as session:
-#         query = (
-#             select(StrTestSuite).where(
-#                 and_(
-#                     StrTestSuite.user_key == 'a',
-#                     StrTestSuite.suite_name == f"agent{global_context.global_storage['suite_name']}",
-#                     StrTestSuite.status == "running",
-#                     StrTestSuite.type == "api",
-#                 )
-#             ).order_by(desc(StrTestSuite.created_at)).limit(1)
-#         )
-#         result = await session.execute(query)
-#         suite = result.first()[0]
-#         print(suite)
-#         if suite:
-#             suite.status = 'finish'
-#             suite.updated_at = datetime.now()
-#             session.add(suite)
-#             await session.commit()
-
-
-async def main(name, task):
-    await before_run(name)
-    await run(task)
-    # await end_run(name)
+async def main(task_key, plan_key, case_content, doc_content):
+    await before_run(task_key,plan_key,doc_content)
+    await run(case_content)
+    await end_run()
 
 
 if __name__ == '__main__':
+    # task_key='a8e033ae-583c-435f-897b-834ccf5124dc',
+    # plan_key = '40951735-35dc-4fc0-9231-281d2b6fee7e'
+    # case_content = '<TestPlan name="mysql实例级别所有权限测试用例">\n <BeforeThreadGroup name="跑铺底数据的语句(创建库)" error_operation="True" threads="10" ramp_up="1" enabled="True">\n  <VariableDataSet name="用户定义的变量">\n    <variableProp name="u:username">admin</variableProp>\n    <variableProp name="u:instance_key">120autotest-mysql</variableProp>\n    <variableProp name="u:schema_key">mysql</variableProp>\n    <variableProp name="u:dbtype">2</variableProp>\n    <variableProp name="u:prefs">"2,3,5,6,7"</variableProp>\n    <variableProp name="u:except">操作成功</variableProp>\n  </VariableDataSet>\n  <PythonShellSampler name="创建uuid">\n    <pythonProp name="p:code">\nimport uuid\nsql_token = str(uuid.uuid4())\n    </pythonProp>\n  </PythonShellSampler>\n  <HttpSampler name="获取auth">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">获取auth接口</httpProp>\n   <HeadExtractor name="header提取器" parentname="获取auth">\n     <headerProp name="h:Auth">$.data[0]</headerProp>\n   </HeadExtractor>\n  </HttpSampler>\n  <DBDataSet name="sqlData">\n    <mysqlProp name="ip">192.168.220.200</mysqlProp>\n    <mysqlProp name="port">3306</mysqlProp>\n    <mysqlProp name="username">admin</mysqlProp>\n    <mysqlProp name="password">whdata123</mysqlProp>\n    <mysqlProp name="database">str_test_lwc</mysqlProp>\n    <mysqlProp name="sql">SELECT\n                    REPLACE(st.sql_lang, \'ncjx_str_schema_name\', ut.t_user_name) AS sql_lang\n                FROM str_sql_template st\n                JOIN str_user_template ut\n                  ON ut.id in (1)\n                WHERE st.sql_exec_timing = \'before\' and st.sql_lang like \'%create database%\'\n                  AND st.sql_type = 2  and st.is_enable = 1 limit 1;</mysqlProp>\n    <mysqlProp name="variableNames">sql</mysqlProp>\n  </DBDataSet>\n  <HttpSampler name="查找实例的connect_id">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">获取系统实例</httpProp>\n   <ExpressionExtractor name="提取" parentname="查找实例的connect_id">\n     <expressionProp name="e:connect_id">$.data.records[0].unique_key</expressionProp>\n   </ExpressionExtractor>\n  </HttpSampler>\n  <HttpSampler name="查找schema的schema_id">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">获取系统实例下的schema</httpProp>\n   <ExpressionExtractor name="提取" parentname="查找schema的schema_id">\n     <expressionProp name="e:schema_id">$.data.records[0].schema_id</expressionProp>\n   </ExpressionExtractor>\n   <ResponseAssertion name="响应断言" parentname="查找schema的schema_id" assert_type="match" selfVerification="False">\n     <AssertProp name="a:message">操作成功</AssertProp>\n   </ResponseAssertion>\n  </HttpSampler>\n  <HttpSampler name="打开会话">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">用户打开会话的接口</httpProp>\n  </HttpSampler>\n  <HttpSampler name="预检查">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">预检查的接口</httpProp>\n   <ExpressionExtractor name="提取" parentname="预检查">\n     <expressionProp name="e:sqls">$.data.sqls</expressionProp>\n   </ExpressionExtractor>\n  </HttpSampler>\n  <HttpSampler name="执行sql">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">sql执行的接口</httpProp>\n   <ExpressionExtractor name="提取" parentname="执行sql">\n     <expressionProp name="e:task_id">$.data.task_id</expressionProp>\n   </ExpressionExtractor>\n  </HttpSampler>\n  <HttpSampler name="获取结果">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">获取sql执行结果</httpProp>\n   <ExpressionExtractor name="提取" parentname="获取结果">\n     <expressionProp name="e:task_info_stage">$.data.task_info.stage</expressionProp>\n   </ExpressionExtractor>\n   <ResponseAssertion name="响应断言" parentname="获取结果" assert_type="match" selfVerification="False">\n     <AssertProp name="a:$.data.execute_info.query_results[*].message">执行成功 or 影响行数</AssertProp>\n   </ResponseAssertion>\n  </HttpSampler>\n  <WhileController name="循环控制结果是否拿完整" condition="int(${task_info_stage}) != len(${sqls})" is_variable="True" variable_position="ExpressionExtractor">\n   <HttpSampler name="获取结果">\n     <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n     <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n     <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n     <httpProp name="h:interface">获取sql执行结果</httpProp>\n    <ExpressionExtractor name="提取" parentname="获取结果">\n      <expressionProp name="e:task_info_stage">$.data.task_info.stage</expressionProp>\n    </ExpressionExtractor>\n    <ResponseAssertion name="响应断言" parentname="获取结果" assert_type="match" selfVerification="False">\n      <AssertProp name="a:$.data.execute_info.query_results[*].message">执行成功 or 影响行数</AssertProp>\n    </ResponseAssertion>\n   </HttpSampler>\n  </WhileController>\n  <HttpSampler name="关闭会话">\n    <httpProp name="h:env">http://192.168.220.243:7080</httpProp>\n    <httpProp name="api_project">9da4a7be-c213-4ef0-ab9d-fdfdf2209548</httpProp>\n    <httpProp name="api_branch">4aa63ed3-c964-4b2e-8b0b-aec0138c797a</httpProp>\n    <httpProp name="h:interface">用户关闭会话的接口</httpProp>\n  </HttpSampler>\n  <ResultReportingListener name="mysql实例级别所有权限测试用例">\n  </ResultReportingListener>\n </BeforeThreadGroup>\n</TestPlan>\n'
+    # doc_content = '["{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"获取auth接口\\", \\"description\\": \\"用于获取用户的auth信息\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/test/system/users/getauth\\": {\\"get\\": {\\"operationId\\": \\"获取auth接口\\", \\"summary\\": \\"用于获取用户的auth信息\\", \\"description\\": \\"用于获取用户的auth信息\\", \\"parameters\\": [{\\"in\\": \\"query\\", \\"name\\": \\"offset\\", \\"schema\\": {\\"type\\": \\"integer\\"}, \\"description\\": \\"分页\\", \\"example\\": 0}, {\\"in\\": \\"query\\", \\"name\\": \\"limit\\", \\"schema\\": {\\"type\\": \\"integer\\"}, \\"description\\": \\"分页大小\\", \\"example\\": 10}, {\\"in\\": \\"query\\", \\"name\\": \\"sk\\", \\"schema\\": {\\"type\\": \\"integer\\"}, \\"description\\": \\"秘钥\\", \\"example\\": 111222333222111000}, {\\"in\\": \\"query\\", \\"name\\": \\"username\\", \\"schema\\": {\\"type\\": \\"string\\"}, \\"description\\": \\"用户\\", \\"example\\": \\"${username}\\"}], \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"接口成功状态码\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"接口成功信息\\"}, \\"data\\": {\\"type\\": \\"array\\", \\"description\\": \\"\\", \\"items\\": {\\"type\\": \\"object\\"}}}, \\"required\\": [\\"status\\", \\"message\\", \\"data\\"]}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"获取系统实例\\", \\"description\\": \\"获取系统内的实例的信息\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/config/database-connections\\": {\\"get\\": {\\"operationId\\": \\"获取系统实例\\", \\"summary\\": \\"获取系统内的实例的信息\\", \\"description\\": \\"获取系统内的实例的信息\\", \\"parameters\\": [{\\"in\\": \\"query\\", \\"name\\": \\"offset\\", \\"schema\\": {\\"type\\": \\"integer\\"}, \\"description\\": \\"分页\\", \\"example\\": 0}, {\\"in\\": \\"query\\", \\"name\\": \\"limit\\", \\"schema\\": {\\"type\\": \\"integer\\"}, \\"description\\": \\"分页大小\\", \\"example\\": 10}, {\\"in\\": \\"query\\", \\"name\\": \\"keywords\\", \\"schema\\": {\\"type\\": \\"string\\"}, \\"description\\": \\"搜索实例的key\\", \\"example\\": \\"${instance_key}\\"}], \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\"}, \\"data\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\"}}, \\"required\\": [\\"status\\", \\"message\\", \\"data\\"]}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"获取系统实例下的schema\\", \\"description\\": \\"获取系统内的schema的信息\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/config/schemas\\": {\\"get\\": {\\"operationId\\": \\"获取系统实例下的schema\\", \\"summary\\": \\"获取系统内的schema的信息\\", \\"description\\": \\"获取系统内的schema的信息\\", \\"parameters\\": [{\\"in\\": \\"query\\", \\"name\\": \\"offset\\", \\"schema\\": {\\"type\\": \\"integer\\"}, \\"description\\": \\"分页\\", \\"example\\": 0}, {\\"in\\": \\"query\\", \\"name\\": \\"limit\\", \\"schema\\": {\\"type\\": \\"integer\\"}, \\"description\\": \\"分页大小\\", \\"example\\": 10}, {\\"in\\": \\"query\\", \\"name\\": \\"keywords\\", \\"schema\\": {\\"type\\": \\"string\\"}, \\"description\\": \\"搜索schema的key\\", \\"example\\": \\"${schema_key}\\"}, {\\"in\\": \\"query\\", \\"name\\": \\"connect_id\\", \\"schema\\": {\\"type\\": \\"string\\"}, \\"description\\": \\"实例的id\\", \\"example\\": \\"${connect_id}\\"}], \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"接口成功状态码\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"接口成功信息\\"}, \\"data\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\"}}, \\"required\\": [\\"status\\", \\"message\\"]}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"用户打开会话的接口\\", \\"description\\": \\"传入对应的信息，可以打开对应会话窗口\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/sql/executes/open-session\\": {\\"post\\": {\\"operationId\\": \\"用户打开会话的接口\\", \\"summary\\": \\"传入对应的信息，可以打开对应会话窗口\\", \\"description\\": \\"传入对应的信息，可以打开对应会话窗口\\", \\"requestBody\\": {\\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"connect_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${connect_id}\\"}, \\"schema_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${schema_id}\\"}, \\"token\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${sql_token}\\"}, \\"origin\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"is_account_conn\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"line_feed\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"auto_select_sql\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"date_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"yyyy-MM-dd\\"}, \\"time_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"HH:mm:ss\\"}, \\"date_time_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"yyyy-MM-dd HH:mm:ss.SSS\\"}, \\"use_native_format\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}, \\"prefs\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"2,3,5,6,7\\"}, \\"auto_connect\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"font_size\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 14}, \\"theme\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"short_connect\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"results_display\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"auto_commit\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}}, \\"required\\": []}}}}, \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\"}, \\"data\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\"}}, \\"required\\": []}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"预检查的接口\\", \\"description\\": \\"进行sql预检查\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/sql/executes/precheck\\": {\\"post\\": {\\"operationId\\": \\"预检查的接口\\", \\"summary\\": \\"进行sql预检查\\", \\"description\\": \\"进行sql预检查\\", \\"requestBody\\": {\\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"limit\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 2000}, \\"offset\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"origin\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 1}, \\"connect_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${connect_id}\\"}, \\"schema_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${schema_id}\\"}, \\"charset\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"\\"}, \\"token\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${sql_token}\\"}, \\"is_account_conn\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"line_feed\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"auto_select_sql\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"date_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"yyyy-MM-dd\\"}, \\"time_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"HH:mm:ss\\"}, \\"date_time_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"yyyy-MM-dd HH:mm:ss.SSS\\"}, \\"use_native_format\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}, \\"prefs\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"2,3,5,6,7\\"}, \\"auto_connect\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"font_size\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 14}, \\"theme\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"short_connect\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"results_display\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"auto_commit\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}, \\"is_first_precheck\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"sql\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${sql}\\"}, \\"is_overall\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}}, \\"required\\": []}}}}, \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\"}, \\"data\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\"}}, \\"required\\": []}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"sql执行的接口\\", \\"description\\": \\"执行sql\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/sql/executes/sql\\": {\\"post\\": {\\"operationId\\": \\"sql执行的接口\\", \\"summary\\": \\"执行sql\\", \\"description\\": \\"执行sql\\", \\"requestBody\\": {\\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"sqls\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\", \\"example\\": \\"${sqls}\\"}, \\"task_id\\": {\\"type\\": \\"null\\", \\"description\\": \\"\\", \\"example\\": \\"\\"}, \\"serial_number\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 1}, \\"limit\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 2000}, \\"offset\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"origin\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 1}, \\"connect_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${connect_id}\\"}, \\"schema_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${schema_id}\\"}, \\"charset\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"\\"}, \\"token\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${sql_token}\\"}, \\"isSqlWindow\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}, \\"is_account_conn\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"is_error_continue\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}, \\"is_overall\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"pattern\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 2}, \\"line_feed\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"auto_select_sql\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"date_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"yyyy-MM-dd\\"}, \\"time_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"HH:mm:ss\\"}, \\"date_time_format\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"yyyy-MM-dd HH:mm:ss.SSS\\"}, \\"use_native_format\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}, \\"prefs\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${prefs}\\"}, \\"auto_connect\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"font_size\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 14}, \\"theme\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"short_connect\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"results_display\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\", \\"example\\": 0}, \\"smart_commit\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"false\\"}, \\"is_auto_commit\\": {\\"type\\": \\"boolean\\", \\"description\\": \\"\\", \\"example\\": \\"true\\"}}, \\"required\\": []}}}}, \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"number\\", \\"description\\": \\"\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\"}, \\"data\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\"}}, \\"required\\": []}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"获取sql执行结果\\", \\"description\\": \\"获取sql执行结果\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/sql/executes/task-result\\": {\\"get\\": {\\"operationId\\": \\"获取sql执行结果\\", \\"summary\\": \\"获取sql执行结果\\", \\"description\\": \\"获取sql执行结果\\", \\"parameters\\": [{\\"in\\": \\"query\\", \\"name\\": \\"token\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${sql_token}\\"}, {\\"in\\": \\"query\\", \\"name\\": \\"connect_id\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${connect_id}\\"}, {\\"in\\": \\"query\\", \\"name\\": \\"schema_id\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${schema_id}\\"}, {\\"in\\": \\"query\\", \\"name\\": \\"task_id\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${task_id}\\"}], \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"接口成功状态码\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"接口成功信息\\"}, \\"data\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\"}}, \\"required\\": []}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"用户关闭会话的接口\\", \\"description\\": \\"传入对应的信息，可以关闭对应会话窗口\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/sql/executes/disconnect\\": {\\"post\\": {\\"operationId\\": \\"用户关闭会话的接口\\", \\"summary\\": \\"传入对应的信息，可以关闭对应会话窗口\\", \\"description\\": \\"传入对应的信息，可以关闭对应会话窗口\\", \\"requestBody\\": {\\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"connect_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${connect_id}\\"}, \\"schema_id\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${schema_id}\\"}, \\"token\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\", \\"example\\": \\"${sql_token}\\"}}, \\"required\\": []}}}}, \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\"}, \\"data\\": {\\"type\\": \\"string\\", \\"description\\": \\"\\"}}, \\"required\\": []}}}}}}}}}", "{\\"openapi\\": \\"3.0.0\\", \\"info\\": {\\"title\\": \\"获取sql执行结果\\", \\"description\\": \\"获取sql执行结果\\", \\"version\\": \\"6.2.2\\", \\"contact\\": {\\"name\\": \\"admin\\"}}, \\"servers\\": [{\\"url\\": \\"${scheme}://${host}:${scheme_port}\\", \\"description\\": \\"接口测试服务器\\"}], \\"paths\\": {\\"/api/pe/sql/executes/task-result\\": {\\"get\\": {\\"operationId\\": \\"获取sql执行结果\\", \\"summary\\": \\"获取sql执行结果\\", \\"description\\": \\"获取sql执行结果\\", \\"parameters\\": [{\\"in\\": \\"query\\", \\"name\\": \\"token\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${sql_token}\\"}, {\\"in\\": \\"query\\", \\"name\\": \\"connect_id\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${connect_id}\\"}, {\\"in\\": \\"query\\", \\"name\\": \\"schema_id\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${schema_id}\\"}, {\\"in\\": \\"query\\", \\"name\\": \\"task_id\\", \\"schema\\": {\\"type\\": \\"object\\"}, \\"description\\": \\"\\", \\"example\\": \\"${task_id}\\"}], \\"responses\\": {\\"200\\": {\\"description\\": \\"操作成功\\", \\"content\\": {\\"application/json\\": {\\"schema\\": {\\"type\\": \\"object\\", \\"properties\\": {\\"status\\": {\\"type\\": \\"integer\\", \\"description\\": \\"接口成功状态码\\"}, \\"message\\": {\\"type\\": \\"string\\", \\"description\\": \\"接口成功信息\\"}, \\"data\\": {\\"type\\": \\"object\\", \\"description\\": \\"\\"}}, \\"required\\": []}}}}}}}}}"]'
+    # asyncio.run(main(task_key,plan_key,case_content,doc_content))
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name")
-    parser.add_argument("--task")
+    parser.add_argument("--task_key")
+    parser.add_argument("--plan_key")
+    parser.add_argument("--case_content")
+    parser.add_argument("--doc_content")
     args = parser.parse_args()
-    asyncio.run(main(args.name, args.task))
+    asyncio.run(main(args.task_key, args.plan_key, args.case_content, args.doc_content))

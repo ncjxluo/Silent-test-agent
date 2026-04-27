@@ -53,7 +53,7 @@ class ResponseAssertion(Assertion):
             local_ctx[sampler_name]["assert_data"] = assert_data
         else:
             if self.__dict__.get("selfVerification") == "true":
-                ver_sign = self.struct_assert(local_ctx, last_response,sampler_name)
+                ver_sign = self.struct_assert(local_ctx, last_response, sampler_name)
             else:
                 ver_sign = "自主校验功能未打开"
 
