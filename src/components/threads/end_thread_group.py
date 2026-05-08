@@ -40,7 +40,7 @@ class EndThreadGroup(Thread):
                     count = child.data_queue.qsize()
             sleep_time = self.ramp_up / max_threads
             tasks = []
-            semaphore = asyncio.Semaphore(self.threads)
+            semaphore = asyncio.Semaphore(max_threads)
             if max_threads == 1:
                 for x in range(count):
                     await self.run()
