@@ -131,6 +131,9 @@ class HttpSampler(Sampler):
         req_data["params"] = dict()
         interface_params = local_ctx.get("interface").get("parameters")
 
+        if interface_params is None:
+            interface_params = []
+
         if req_data.get("method").upper() == "GET":
             for item in interface_params:
                 req_data["params"][item.get("name")] = item.get("example")
